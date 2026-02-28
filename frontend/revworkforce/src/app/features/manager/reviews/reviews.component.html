@@ -1,0 +1,329 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Team Performance Reviews</div>
+        <div class="page-breadcrumb">Manager / Reviews</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar"
+             style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
+          {{ getInitials(auth.currentUser()?.name || '') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="stat-value">{{ reviews().length }}</div>
+            <div class="stat-label">Total Reviews</div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="stat-card"
+               style="cursor:pointer"
+               (click)="activeFilter.set('PENDING')">
+            <div class="stat-icon amber">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-value">{{ pendingCount() }}</div>
+            <div class="stat-label">Awaiting Feedback</div>
+            <div class="stat-sublabel">
+              <span class="tag tag-warning">Action needed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4">
+          <div class="stat-card"
+               style="cursor:pointer"
+               (click)="activeFilter.set('REVIEWED')">
+            <div class="stat-icon green">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-value">{{ reviewedCount() }}</div>
+            <div class="stat-label">Reviewed</div>
+            <div class="stat-sublabel">
+              <span class="tag tag-success">Completed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="d-flex gap-2 mb-3">
+        @for (f of ['ALL','PENDING','REVIEWED']; track f) {
+          <button class="filter-tab"
+                  [class.active]="activeFilter() === f"
+                  (click)="activeFilter.set($any(f))">
+            {{ f }}
+          </button>
+        }
+      </div>
+
+      <!-- Review Cards -->
+      @if (isLoading()) {
+        <div class="loading-spinner">
+          <div class="spinner-border text-primary"></div>
+        </div>
+      } @else {
+
+        <div class="row g-3">
+          @for (r of filtered; track r.id) {
+            <div class="col-lg-6">
+              <div class="review-card">
+
+                <div class="review-card-header">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rev-avatar"
+                         [style.background]="getAvatarColor(r.employeeName)">
+                      {{ getInitials(r.employeeName) }}
+                    </div>
+                    <div>
+                      <div class="rev-name">{{ r.employeeName }}</div>
+                      <div class="rev-designation">{{ r.designation }}</div>
+                    </div>
+                  </div>
+
+                  <span class="badge-status"
+                        [class.badge-pending]="r.status === 'PENDING'"
+                        [class.badge-approved]="r.status === 'REVIEWED'">
+                    {{ r.status }}
+                  </span>
+                </div>
+
+                <div class="review-meta-row">
+                  <span>
+                    <i class="bi bi-calendar3"></i>
+                    Period: <strong>{{ r.period }}</strong>
+                  </span>
+                  <span>
+                    <i class="bi bi-clock"></i>
+                    Submitted: {{ r.submittedDate | date:'dd MMM yyyy' }}
+                  </span>
+                </div>
+
+                @if (r.status === 'REVIEWED' && r.managerFeedback) {
+                  <div class="feedback-preview">
+                    <div class="feedback-label">
+                      <i class="bi bi-chat-quote"></i> Your Feedback
+                    </div>
+                    <div class="feedback-text">
+                      {{ r.managerFeedback }}
+                    </div>
+                    <div class="stars-display">
+                      @for (s of [1,2,3,4,5]; track s) {
+                        <span
+                          [style.color]="s <= (r.managerRating || 0)
+                                         ? 'var(--accent)'
+                                         : 'var(--border)'">★</span>
+                      }
+                      <span style="font-size:0.75rem;color:var(--text-muted);margin-left:0.3rem;">
+                        {{ r.managerRating }}/5
+                      </span>
+                    </div>
+                  </div>
+                }
+
+                <div class="review-card-footer">
+                  <div class="self-rating">
+                    Self Rating:
+                    @for (s of [1,2,3,4,5]; track s) {
+                      <span
+                        [style.color]="s <= (r.selfRating || 0)
+                                       ? 'var(--accent)'
+                                       : 'var(--border)'">★</span>
+                    }
+                  </div>
+
+                  @if (r.status === 'PENDING') {
+                    <button class="btn-give-feedback"
+                            (click)="openReview(r)">
+                      <i class="bi bi-chat-left-text"></i> Give Feedback
+                    </button>
+                  } @else {
+                    <button class="btn-view-review"
+                            (click)="openReview(r)">
+                      <i class="bi bi-eye"></i> View Details
+                    </button>
+                  }
+                </div>
+
+              </div>
+            </div>
+          }
+
+          @empty {
+            <div class="col-12 text-center p-5"
+                 style="color:var(--text-muted);">
+              <i class="bi bi-file-earmark-text"
+                 style="font-size:2.5rem;display:block;margin-bottom:0.75rem;"></i>
+              No reviews found.
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+@if (showModal() && selectedReview()) {
+
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+
+  <div class="feedback-modal">
+    <div class="modal-header-custom">
+      <div class="modal-title-custom">
+        <i class="bi bi-file-earmark-text"
+           style="color:var(--primary);"></i>
+        Performance Review
+      </div>
+      <button class="modal-close"
+              (click)="closeModal()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="modal-body-custom"
+         style="max-height:70vh;overflow-y:auto;">
+
+      <!-- Employee Info -->
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="rev-avatar"
+             [style.background]="getAvatarColor(selectedReview()!.employeeName)">
+          {{ getInitials(selectedReview()!.employeeName) }}
+        </div>
+        <div>
+          <div style="font-weight:700;">
+            {{ selectedReview()!.employeeName }}
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">
+            {{ selectedReview()!.designation }}
+            · {{ selectedReview()!.period }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Review Sections -->
+      @if (selectedReview()!.deliverables) {
+        <div class="review-section">
+          <div class="rs-label">
+            <i class="bi bi-check2-square"></i> Key Deliverables
+          </div>
+          <div class="rs-content">
+            {{ selectedReview()!.deliverables }}
+          </div>
+        </div>
+      }
+
+      @if (selectedReview()!.accomplishments) {
+        <div class="review-section">
+          <div class="rs-label">
+            <i class="bi bi-trophy"></i> Accomplishments
+          </div>
+          <div class="rs-content">
+            {{ selectedReview()!.accomplishments }}
+          </div>
+        </div>
+      }
+
+      @if (selectedReview()!.improvementAreas) {
+        <div class="review-section">
+          <div class="rs-label">
+            <i class="bi bi-arrow-up-circle"></i>
+            Areas of Improvement
+          </div>
+          <div class="rs-content">
+            {{ selectedReview()!.improvementAreas }}
+          </div>
+        </div>
+      }
+
+      <!-- Self Rating -->
+      <div class="review-section">
+        <div class="rs-label">
+          <i class="bi bi-star"></i> Self Rating
+        </div>
+        <div class="stars-display mt-2">
+          @for (s of [1,2,3,4,5]; track s) {
+            <span style="font-size:1.2rem;"
+                  [style.color]="s <= (selectedReview()!.selfRating || 0)
+                                 ? 'var(--accent)'
+                                 : 'var(--border)'">★</span>
+          }
+          <span style="font-size:0.8rem;color:var(--text-muted);margin-left:0.4rem;">
+            {{ selectedReview()!.selfRating }}/5
+          </span>
+        </div>
+      </div>
+
+      <!-- Manager Feedback -->
+      <div class="review-section"
+           style="border-top:2px solid var(--primary);padding-top:1rem;margin-top:0.5rem;">
+
+        <div class="rs-label"
+             style="color:var(--primary);">
+          <i class="bi bi-chat-quote"></i> Your Feedback
+        </div>
+
+        <textarea class="modal-textarea mt-2"
+                  rows="4"
+                  [(ngModel)]="feedbackText"
+                  [readonly]="selectedReview()!.status === 'REVIEWED'"
+                  placeholder="Write detailed feedback...">
+        </textarea>
+
+        <!-- Star Picker -->
+        <div class="rs-label mt-3">
+          <i class="bi bi-star-fill"></i> Your Rating
+        </div>
+
+        <div class="star-picker">
+          @for (s of [1,2,3,4,5]; track s) {
+            <button class="star-btn"
+                    [class.active]="s <= activeRating()"
+                    (mouseenter)="hoverStar(s)"
+                    (mouseleave)="leaveStar()"
+                    (click)="setRating(s)"
+                    [disabled]="selectedReview()!.status === 'REVIEWED'">
+              ★
+            </button>
+          }
+
+          <span class="star-label">
+            {{ activeRating() > 0
+               ? activeRating() + ' / 5'
+               : 'Select rating' }}
+          </span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn-modal-cancel"
+              (click)="closeModal()">
+        Close
+      </button>
+
+      @if (selectedReview()!.status === 'SUBMITTED') {
+        <button class="btn-modal-submit approve"
+                [disabled]="!feedbackText.trim() || !managerRating"
+                (click)="submitFeedback()">
+          <i class="bi bi-send"></i> Submit Feedback
+        </button>
+      }
+    </div>
+  </div>
+}

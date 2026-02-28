@@ -1,0 +1,11 @@
+.card-panel {
+  width: 100%;
+  max-width: 650px;   /* increase width */
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.form-control {
+  height: 45px;
+  font-size: 0.95rem;
+}

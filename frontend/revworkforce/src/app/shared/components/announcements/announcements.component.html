@@ -1,0 +1,47 @@
+<div class="d-flex">
+  <app-sidebar [role]="getRole()" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Announcements</div>
+        <div class="page-breadcrumb">Home / Announcements</div>
+      </div>
+      <div class="topbar-right">
+        <a href="#" class="icon-btn"><i class="bi bi-search"></i></a>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <div class="row g-3" style="padding:1rem;">
+            @for (ann of announcements(); track ann.id) {
+              <div class="col-lg-4">
+                <div class="announcement-item" style="border:1px solid var(--border);border-radius:12px;padding:1.25rem;background:var(--bg-main);display:flex;gap:1rem;">
+                  <div class="ann-icon" [class]="getTypeClass(ann.type)"
+                    style="width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">
+                    <i [class]="'bi ' + getIcon(ann.type)"></i>
+                  </div>
+                  <div style="flex:1;">
+                    <div class="ann-title" style="font-weight:700;font-size:0.95rem;color:var(--text-main);margin-bottom:0.5rem;">{{ ann.title }}</div>
+                    <div class="ann-desc" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ ann.description }}</div>
+                    <div class="ann-time" style="font-size:0.75rem;color:var(--text-muted);">
+                      <i class="bi bi-clock"></i> {{ ann.createdAt }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="col-12 text-center text-muted p-4">No announcements yet.</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

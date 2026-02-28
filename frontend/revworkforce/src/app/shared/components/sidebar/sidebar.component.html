@@ -1,0 +1,222 @@
+<aside class="sidebar">
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="brand-icon"><i class="bi bi-people-fill"></i></div>
+    <div>
+      <div class="brand-text">Rev<span>Workforce</span></div>
+      @if (role === 'ADMIN') {
+        <div class="admin-badge">Admin Panel</div>
+      }
+      @if (role === 'MANAGER') {
+        <div class="admin-badge" style="background:rgba(139,92,246,0.2);border-color:rgba(139,92,246,0.3);color:#a78bfa;">Manager</div>
+      }
+    </div>
+  </div>
+
+  <!-- User -->
+  <div class="sidebar-user">
+    <div class="d-flex align-items-center gap-2">
+      <div class="user-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      <div>
+        <div class="user-name">{{ auth.currentUser()?.name || 'User' }}</div>
+        <div class="user-role">{{ auth.currentUser()?.designation || role }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="sidebar-nav">
+
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item">
+      <a [routerLink]="'/' + role.toLowerCase()" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
+        <i class="bi bi-grid-1x2"></i> Dashboard
+      </a>
+    </div>
+
+    <!-- EMPLOYEE & MANAGER: My Profile & Leave & Performance -->
+    @if (role === 'EMPLOYEE' || role === 'MANAGER') {
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + '/profile'" routerLinkActive="active">
+          <i class="bi bi-person-circle"></i> My Profile
+        </a>
+      </div>
+
+      <div class="nav-section-label">My Leave</div>
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + '/apply-leave'" routerLinkActive="active">
+          <i class="bi bi-calendar-plus"></i> Apply Leave
+        </a>
+      </div>
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + '/my-leaves'" routerLinkActive="active">
+          <i class="bi bi-calendar-check"></i> My Leaves
+        </a>
+      </div>
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + '/holidays'" routerLinkActive="active">
+          <i class="bi bi-calendar3"></i> Holiday Calendar
+        </a>
+      </div>
+
+      <div class="nav-section-label">My Performance</div>
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + (role === 'MANAGER' ? '/my-reviews' : '/reviews')" routerLinkActive="active">
+          <i class="bi bi-file-earmark-text"></i> My Reviews
+        </a>
+      </div>
+      <div class="nav-item">
+        <a [routerLink]="'/' + role.toLowerCase() + (role === 'MANAGER' ? '/my-goals' : '/goals')" routerLinkActive="active">
+          <i class="bi bi-bullseye"></i> My Goals
+        </a>
+      </div>
+    }
+
+    <!-- MANAGER ONLY -->
+    @if (role === 'MANAGER') {
+      <div class="nav-section-label">Team Leave</div>
+      <div class="nav-item">
+        <a routerLink="/manager/leave-approvals" routerLinkActive="active">
+          <i class="bi bi-calendar-check"></i> Leave Approvals
+          <span class="nav-badge">!</span>
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/manager/team-leaves" routerLinkActive="active">
+          <i class="bi bi-people"></i> Team Leave Requests
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/manager/team-calendar" routerLinkActive="active">
+          <i class="bi bi-calendar2-week"></i> Team Calendar
+        </a>
+      </div>
+
+      <div class="nav-section-label">Team Performance</div>
+      <div class="nav-item">
+        <a routerLink="/manager/reviews" routerLinkActive="active">
+          <i class="bi bi-file-earmark-check"></i> Team Reviews
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/manager/goals" routerLinkActive="active">
+          <i class="bi bi-trophy"></i> Team Goals
+        </a>
+      </div>
+
+      <div class="nav-section-label">Team Management</div>
+      <div class="nav-item">
+        <a routerLink="/manager/team" routerLinkActive="active">
+          <i class="bi bi-people-fill"></i> My Team
+        </a>
+      </div>
+    }
+
+    <!-- ADMIN ONLY -->
+    @if (role === 'ADMIN') {
+      <div class="nav-item">
+        <a routerLink="/admin/profile" routerLinkActive="active">
+          <i class="bi bi-person-circle"></i> My Profile
+        </a>
+      </div>
+
+      <div class="nav-section-label">My Leave & Performance</div>
+      <div class="nav-item">
+        <a routerLink="/admin/apply-leave" routerLinkActive="active">
+          <i class="bi bi-calendar-plus"></i> Apply Leave
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/my-leaves" routerLinkActive="active">
+          <i class="bi bi-calendar-check"></i> My Leaves
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/reviews" routerLinkActive="active">
+          <i class="bi bi-file-earmark-text"></i> My Reviews
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/goals" routerLinkActive="active">
+          <i class="bi bi-bullseye"></i> My Goals
+        </a>
+      </div>
+
+      <div class="nav-section-label">Employee Management</div>
+      <div class="nav-item">
+        <a routerLink="/admin/employees" routerLinkActive="active">
+          <i class="bi bi-people"></i> All Employees
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/departments" routerLinkActive="active">
+          <i class="bi bi-building"></i> Departments
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/designations" routerLinkActive="active">
+          <i class="bi bi-briefcase"></i> Designations
+        </a>
+      </div>
+      
+      <div class="nav-section-label">Leave Management</div>
+      <div class="nav-item">
+        <a routerLink="/admin/leave-management" routerLinkActive="active">
+          <i class="bi bi-calendar2-week"></i> Leave Management
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/leave-balance-management" routerLinkActive="active">
+          <i class="bi bi-wallet2"></i> Leave Balance
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/leave-reports" routerLinkActive="active">
+          <i class="bi bi-file-earmark-bar-graph"></i> Leave Reports
+        </a>
+      </div>
+
+      <div class="nav-section-label">System Configuration</div>
+      <div class="nav-item">
+        <a routerLink="/admin/announcements" routerLinkActive="active">
+          <i class="bi bi-megaphone"></i> Announcements
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/holidays" routerLinkActive="active">
+          <i class="bi bi-calendar3"></i> Holiday Calendar
+        </a>
+      </div>
+      <div class="nav-item">
+        <a routerLink="/admin/activity-logs" routerLinkActive="active">
+          <i class="bi bi-activity"></i> Activity Logs
+        </a>
+      </div>
+    }
+
+    <!-- COMMON -->
+    <div class="nav-section-label">Company</div>
+    <div class="nav-item">
+      <a routerLink="/notifications" routerLinkActive="active">
+        <i class="bi bi-bell"></i> Notifications
+      </a>
+    </div>
+    <div class="nav-item">
+      <a routerLink="/announcements" routerLinkActive="active">
+        <i class="bi bi-megaphone"></i> Company Announcements
+      </a>
+    </div>
+    <div class="nav-item">
+      <a routerLink="/directory" routerLinkActive="active">
+        <i class="bi bi-person-lines-fill"></i> Directory
+      </a>
+    </div>
+
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="btn-logout" (click)="logout()">
+      <i class="bi bi-box-arrow-left"></i> Sign Out
+    </button>
+  </div>
+</aside>

@@ -1,0 +1,243 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+
+  <div class="main-content">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div>
+        <div class="page-title">Leave Approvals</div>
+        <div class="page-breadcrumb">Manager / Leave Approvals</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
+          {{ getInitials(getManagerName()) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- Success / Error Banners -->
+      @if (successMsg()) {
+        <div style="background:rgba(16,185,129,0.1);color:#059669;padding:0.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+          <i class="bi bi-check-circle-fill"></i> {{ successMsg() }}
+        </div>
+      }
+      @if (errorMsg()) {
+        <div style="background:rgba(239,68,68,0.1);color:#dc2626;padding:0.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+          <i class="bi bi-exclamation-circle-fill"></i> {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Summary Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-4">
+          <div class="stat-card" style="cursor:pointer;" (click)="activeFilter.set('PENDING')">
+            <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value">{{ pendingCount }}</div>
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-sublabel"><span class="tag tag-warning">Action required</span></div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="stat-card" style="cursor:pointer;" (click)="activeFilter.set('APPROVED')">
+            <div class="stat-icon green"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-value">{{ approvedCount }}</div>
+            <div class="stat-label">Approved</div>
+            <div class="stat-sublabel"><span class="tag tag-success">This month</span></div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="stat-card" style="cursor:pointer;" (click)="activeFilter.set('REJECTED')">
+            <div class="stat-icon red"><i class="bi bi-calendar-x"></i></div>
+            <div class="stat-value">{{ rejectedCount }}</div>
+            <div class="stat-label">Rejected</div>
+            <div class="stat-sublabel"><span class="tag tag-danger">This month</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters + Table -->
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title"><i class="bi bi-calendar-check"></i> Leave Requests</div>
+          <div class="d-flex gap-2 align-items-center">
+            <!-- Search -->
+            <div style="position:relative;">
+              <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:0.85rem;"></i>
+              <input type="text" placeholder="Search employee..."
+                [value]="searchTerm()"
+                (input)="searchTerm.set($any($event.target).value)"
+                style="padding:0.4rem 0.75rem 0.4rem 2rem;border:1px solid var(--border);border-radius:9px;font-size:0.82rem;font-family:'DM Sans',sans-serif;outline:none;width:200px;" />
+            </div>
+            <!-- Filter tabs -->
+            <div class="filter-tabs">
+              @for (f of ['ALL','PENDING','APPROVED','REJECTED']; track f) {
+                <button class="filter-tab" [class.active]="activeFilter() === f"
+                  (click)="activeFilter.set($any(f))">{{ f }}</button>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Applied On</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (leave of filteredLeaves; track leave.id) {
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="emp-avatar" [style.background]="getAvatarColor(leave.employeeName || '')">
+                        {{ getInitials(leave.employeeName) }}
+                      </div>
+                      <div>
+                        <div style="font-weight:600;font-size:0.85rem;">{{ leave.employeeName }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="leave-type-chip">{{ leave.leaveType }}</span>
+                  </td>
+                  <td>{{ leave.startDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ leave.endDate | date:'dd MMM yyyy' }}</td>
+                  <td><strong>{{ leave.days }}</strong></td>
+                  <td>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">{{ leave.reason }}</span>
+                  </td>
+                  <td>{{ leave.appliedDate | date:'dd MMM yyyy' }}</td>
+                  <td>
+                    <span class="badge-status"
+                      [class.badge-pending]="leave.status === 'PENDING'"
+                      [class.badge-approved]="leave.status === 'APPROVED'"
+                      [class.badge-rejected]="leave.status === 'REJECTED'">
+                      {{ leave.status }}
+                    </span>
+                    @if (leave.managerComment) {
+                      <div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.2rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" [title]="leave.managerComment">
+                        💬 {{ leave.managerComment }}
+                      </div>
+                    }
+                  </td>
+                  <td>
+                    @if (leave.status === 'PENDING') {
+                      <div class="d-flex gap-1">
+                        <button class="btn-sm-action btn-approve" (click)="openModal(leave, 'APPROVE')">
+                          <i class="bi bi-check-lg"></i> Approve
+                        </button>
+                        <button class="btn-sm-action btn-reject" (click)="openModal(leave, 'REJECT')">
+                          <i class="bi bi-x-lg"></i> Reject
+                        </button>
+                      </div>
+                    } @else {
+                      <span style="font-size:0.75rem;color:var(--text-muted);">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr>
+                  <td colspan="9" class="text-center p-4" style="color:var(--text-muted);">
+                    <i class="bi bi-calendar-check" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
+                    No leave requests found.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()"></div>
+  <div class="action-modal">
+    <div class="modal-header-custom">
+      <div class="modal-title-custom">
+        @if (modalMode() === 'APPROVE') {
+          <div class="modal-icon-wrap approve"><i class="bi bi-check-circle-fill"></i></div>
+          Approve Leave
+        } @else {
+          <div class="modal-icon-wrap reject"><i class="bi bi-x-circle-fill"></i></div>
+          Reject Leave
+        }
+      </div>
+      <button class="modal-close" (click)="closeModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="modal-body-custom">
+      <!-- Leave summary -->
+      <div class="leave-summary-box">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <div class="emp-avatar" [style.background]="getAvatarColor(selectedLeave()?.employeeName || '')">
+            {{ getInitials(selectedLeave()?.employeeName) }}
+          </div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;">{{ selectedLeave()?.employeeName }}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">{{ selectedLeave()?.leaveType }}</div>
+          </div>
+        </div>
+        <div class="summary-row">
+          <span><i class="bi bi-calendar"></i> {{ selectedLeave()?.startDate | date:'dd MMM yyyy' }} – {{ selectedLeave()?.endDate | date:'dd MMM yyyy' }}</span>
+          <span><strong>{{ selectedLeave()?.days }} day(s)</strong></span>
+        </div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">
+          <i class="bi bi-chat-left-text"></i> {{ selectedLeave()?.reason }}
+        </div>
+      </div>
+
+      <!-- Comment -->
+      <label class="form-label mt-3">
+        @if (modalMode() === 'APPROVE') {
+          Comment <span style="color:var(--text-muted);font-weight:400;">(optional)</span>
+        } @else {
+          Reason for Rejection <span style="color:var(--danger);">*</span>
+        }
+      </label>
+      <textarea class="modal-textarea" rows="3"
+        [placeholder]="modalMode() === 'APPROVE' ? 'Add a comment for the employee...' : 'Enter reason for rejection...'"
+        [(ngModel)]="comment">
+      </textarea>
+      @if (modalMode() === 'REJECT' && !comment.trim()) {
+        <div style="font-size:0.75rem;color:var(--danger);margin-top:0.3rem;">
+          <i class="bi bi-exclamation-circle"></i> Rejection reason is required.
+        </div>
+      }
+    </div>
+
+    <div class="modal-footer-custom">
+      <button class="btn-modal-cancel" (click)="closeModal()">Cancel</button>
+      <button class="btn-modal-submit"
+        [class.approve]="modalMode() === 'APPROVE'"
+        [class.reject]="modalMode() === 'REJECT'"
+        [disabled]="modalMode() === 'REJECT' && !comment.trim()"
+        (click)="submitAction()">
+        @if (isSubmitting()) {
+          <span class="spinner-border spinner-border-sm me-1"></span> Processing...
+        } @else if (modalMode() === 'APPROVE') {
+          <i class="bi bi-check-lg"></i> Confirm Approve
+        } @else {
+          <i class="bi bi-x-lg"></i> Confirm Reject
+        }
+      </button>
+    </div>
+  </div>
+}

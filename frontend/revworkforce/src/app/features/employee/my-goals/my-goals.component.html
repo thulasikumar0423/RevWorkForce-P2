@@ -1,0 +1,179 @@
+<div class="d-flex">
+  <app-sidebar role="EMPLOYEE" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">My Goals</div>
+        <div class="page-breadcrumb">Home / Performance / My Goals</div>
+      </div>
+      <div class="topbar-right">
+        <a href="#" class="icon-btn"><i class="bi bi-search"></i></a>
+        <a href="#" class="icon-btn"><i class="bi bi-bell"></i><span class="dot"></span></a>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="section-header">
+        <div class="section-title">My Goals</div>
+        <button class="btn-primary-sm" (click)="showAddForm.set(true)"><i class="bi bi-plus-lg"></i> Add Goal</button>
+      </div>
+@if (showAddForm()) {
+  <div class="card-panel" style="margin-bottom:1rem;">
+    <div class="card-panel-header">
+      <div class="card-panel-title">
+        <i class="bi bi-plus-circle"></i> Add New Goal
+      </div>
+      <button class="btn-sm-action btn-reject"
+              (click)="showAddForm.set(false)">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <form #goalForm="ngForm"
+          (ngSubmit)="addGoal(goalForm)"
+          style="padding:1rem;">
+
+      <!-- TITLE -->
+      <div class="mb-3">
+        <label style="font-weight:600;font-size:0.85rem;">
+          Title
+        </label>
+
+        <input type="text"
+               name="title"
+               [(ngModel)]="newGoal.title"
+               required
+               #title="ngModel"
+               style="width:100%;border:1px solid var(--border);
+                      border-radius:8px;padding:0.65rem;font-size:0.85rem;" />
+
+        <div *ngIf="title.invalid && title.touched"
+             style="color:red;font-size:0.75rem;margin-top:4px;">
+          Please enter the details
+        </div>
+      </div>
+
+      <!-- DESCRIPTION -->
+      <div class="mb-3">
+        <label style="font-weight:600;font-size:0.85rem;">
+          Description
+        </label>
+
+        <textarea name="description"
+                  [(ngModel)]="newGoal.description"
+                  required
+                  #description="ngModel"
+                  rows="3"
+                  style="width:100%;border:1px solid var(--border);
+                         border-radius:8px;padding:0.65rem;font-size:0.85rem;">
+        </textarea>
+
+        <div *ngIf="description.invalid && description.touched"
+             style="color:red;font-size:0.75rem;margin-top:4px;">
+          Please enter the details
+        </div>
+      </div>
+
+      <!-- DEADLINE + PRIORITY -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label style="font-weight:600;font-size:0.85rem;">
+            Deadline
+          </label>
+
+          <input type="date"
+                 name="deadline"
+                 [(ngModel)]="newGoal.deadline"
+                 required
+                 #deadline="ngModel"
+                 style="width:100%;border:1px solid var(--border);
+                        border-radius:8px;padding:0.65rem;font-size:0.85rem;" />
+
+          <div *ngIf="deadline.invalid && deadline.touched"
+               style="color:red;font-size:0.75rem;margin-top:4px;">
+            Please enter the details
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label style="font-weight:600;font-size:0.85rem;">
+            Priority
+          </label>
+
+          <select name="priority"
+                  [(ngModel)]="newGoal.priority"
+                  required
+                  style="width:100%;border:1px solid var(--border);
+                         border-radius:8px;padding:0.65rem;font-size:0.85rem;">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary-sm">
+        Create Goal
+      </button>
+
+    </form>
+  </div>
+}
+
+      <div class="card-panel">
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <div class="row g-3" style="padding:1rem;">
+            @for (goal of goals(); track goal.id) {
+              <div class="col-lg-6 col-md-12">
+  <div class="goal-card">
+                  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                    <div style="flex:1;">
+                      <div style="font-weight:700;font-size:1rem;color:var(--text-main);">{{ goal.title }}</div>
+                      @if (goal.description) {
+                        <div style="font-size:0.8rem;color:var(--text-main);margin-top:0.5rem;line-height:1.4;">{{ goal.description }}</div>
+                      }
+                      <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
+                        <i class="bi bi-clock"></i> Due: {{ goal.deadline | date:'dd MMM yyyy' }}
+                      </div>
+                    </div>
+                    <span class="priority-badge"
+                      [class.priority-high]="goal.priority === 'HIGH'"
+                      [class.priority-medium]="goal.priority === 'MEDIUM'"
+                      [class.priority-low]="goal.priority === 'LOW'">
+                      {{ goal.priority }}
+                    </span>
+                  </div>
+                  <div style="margin-bottom:0.75rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                      <span style="font-size:0.75rem;color:var(--text-muted);">Progress</span>
+                      <span style="font-size:0.85rem;font-weight:700;color:var(--text-main);">{{ goal.progress }}%</span>
+                    </div>
+                    <div style="height:8px;background:var(--bg-secondary);border-radius:4px;overflow:hidden;">
+                      <div [style.width]="goal.progress + '%'" [style.background]="getProgressColor(goal.progress)"
+                        style="height:100%;transition:width 0.3s;"></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:0.5rem;">
+                    <input type="range" min="0" max="100" [value]="goal.progress"
+                      (change)="updateProgress(goal.id, $any($event.target).value)"
+                      style="flex:1;cursor:pointer;" />
+                    <button class="btn-sm-action btn-reject" (click)="deleteGoal(goal.id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="col-12 text-center text-muted p-4">No goals yet. Click "Add Goal" to create one.</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,4 @@
+/* Sidebar uses dark bg for admin */
+:host ::ng-deep .sidebar {
+  background: #0f172a;
+}

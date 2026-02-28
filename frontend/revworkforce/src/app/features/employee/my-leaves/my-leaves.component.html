@@ -1,0 +1,79 @@
+<div class="d-flex">
+  <app-sidebar role="EMPLOYEE" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">My Leaves</div>
+        <div class="page-breadcrumb">Home / Leave / My Applications</div>
+      </div>
+      <div class="topbar-right">
+        <a href="#" class="icon-btn"><i class="bi bi-search"></i></a>
+        <a href="#" class="icon-btn"><i class="bi bi-bell"></i><span class="dot"></span></a>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="section-header">
+        <div class="section-title">All Leave Applications</div>
+        <a routerLink="/employee/apply-leave" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Apply Leave</a>
+      </div>
+
+      <div class="card-panel">
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Leave Type</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Manager Comment</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (leave of leaves(); track leave.id) {
+                <tr>
+                  <td><strong>{{ leave.leaveType }}</strong></td>
+                  <td>{{ leave.startDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ leave.endDate | date:'dd MMM yyyy' }}</td>
+                 <td>{{ leave.days }}</td>
+                  <td>{{ leave.reason }}</td>
+                  <td>
+                    <span class="badge-status"
+                      [class.badge-approved]="leave.status === 'APPROVED'"
+                      [class.badge-rejected]="leave.status === 'REJECTED'"
+                      [class.badge-pending]="leave.status === 'PENDING'">
+                      {{ leave.status }}
+                    </span>
+                  </td>
+                  <td>{{ leave.managerComment || '—' }}</td>
+                  <td>
+                    @if (leave.status === 'PENDING') {
+                      <button class="btn-sm-action btn-reject" (click)="cancelLeave(leave.id)">
+                        <i class="bi bi-x-lg"></i> Cancel
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr>
+                  <td colspan="8" class="text-center text-muted p-4">
+                    No leave applications found. <a routerLink="/employee/apply-leave" style="color:var(--accent);">Apply for leave</a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+  </div>
+</div>

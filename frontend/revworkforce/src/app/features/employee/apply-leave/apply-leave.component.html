@@ -1,0 +1,185 @@
+<div class="d-flex">
+  <app-sidebar [role]="getSidebarRole()" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Apply Leave</div>
+        <div class="page-breadcrumb">Home / Leave / Apply</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ── Leave Balance Summary Cards ── -->
+      <div class="row g-3 mb-4">
+        @if (isLoading()) {
+          <div class="col-12 text-center p-3">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span class="ms-2" style="font-size:0.85rem;color:var(--text-muted);">Loading leave balances...</span>
+          </div>
+        } @else {
+          @for (t of leaveTypesWithBalance(); track t.id; let i = $index) {
+            <div class="col-sm-6 col-lg-4">
+              <div class="stat-card"
+                   style="cursor:pointer;border:2px solid transparent;transition:all 0.2s;"
+                   [style.border-color]="form.leaveTypeId === t.id ? getBalanceColor(t) : 'transparent'"
+                   (click)="form.leaveTypeId = t.id">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <div style="font-weight:700;font-size:0.9rem;color:var(--text-main);">{{ t.name }}</div>
+                  @if (form.leaveTypeId === t.id) {
+                    <span style="background:var(--primary);color:#fff;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:10px;">SELECTED</span>
+                  }
+                </div>
+                <!-- Progress bar -->
+                <div style="height:6px;background:var(--bg);border-radius:4px;overflow:hidden;margin-bottom:0.5rem;">
+                  <div [style.width]="getBalancePercent(t) + '%'"
+                       [style.background]="getBalanceColor(t)"
+                       style="height:100%;border-radius:4px;transition:width 0.6s ease;">
+                  </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span style="font-size:1.4rem;font-weight:800;" [style.color]="getBalanceColor(t)">{{ t.remaining }}</span>
+                    <span style="font-size:0.75rem;color:var(--text-muted);"> / {{ t.totalQuota }} days</span>
+                  </div>
+                  <div style="font-size:0.72rem;color:var(--text-muted);">{{ t.totalQuota - t.remaining }} used </div>
+                </div>
+                @if (t.remaining === 0) {
+                  <div style="font-size:0.72rem;color:#ef4444;margin-top:0.25rem;font-weight:600;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> No balance left
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @empty {
+            <div class="col-12">
+              <div class="card-panel text-center p-4 text-muted">
+                <i class="bi bi-calendar-x" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
+                No leave types configured. Contact your admin.
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- ── Application Form ── -->
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-calendar-plus"></i> Leave Application Form</div>
+            </div>
+
+            @if (successMsg()) {
+              <div style="background:rgba(16,185,129,0.1);color:#059669;padding:0.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="bi bi-check-circle-fill"></i> {{ successMsg() }}
+              </div>
+            }
+            @if (errorMsg()) {
+              <div style="background:rgba(239,68,68,0.1);color:#dc2626;padding:0.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+                <i class="bi bi-exclamation-circle-fill"></i> {{ errorMsg() }}
+              </div>
+            }
+
+            <form (ngSubmit)="onSubmit()" style="padding:1rem 0;">
+
+              <!-- Leave Type select -->
+              <div class="mb-3">
+                <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;color:var(--text-main);">
+                  Leave Type <span style="color:var(--danger);">*</span>
+                </label>
+                <select [(ngModel)]="form.leaveTypeId" name="leaveTypeId" required
+                  style="width:100%;border:1.5px solid var(--border);border-radius:9px;padding:0.7rem 0.85rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface);color:var(--text-main);">
+                  <option [value]="null">— Select leave type —</option>
+                  @for (t of leaveTypesWithBalance(); track t.id) {
+                    <option [value]="t.id" [disabled]="t.remaining === 0">
+                      {{ t.name }} — {{ t.remaining }} days available
+                      @if (t.remaining === 0) { (No balance) }
+                    </option>
+                  }
+                </select>
+
+                <!-- Inline balance indicator for selected type -->
+                @if (getSelectedBalance(); as sel) {
+                  <div style="margin-top:0.5rem;padding:0.6rem 0.85rem;background:var(--bg);border-radius:8px;font-size:0.82rem;display:flex;align-items:center;justify-content:space-between;">
+                    <span style="color:var(--text-muted);">Available balance:</span>
+                    <span style="font-weight:700;" [style.color]="sel.remaining > 0 ? '#10b981' : '#ef4444'">
+                      {{ sel.remaining }} / {{ sel.totalQuota }} days
+                    </span>
+                  </div>
+                }
+              </div>
+
+              <!-- Dates -->
+              <div class="row mb-3">
+                <div class="col-md-6 mb-3 mb-md-0">
+                  <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;color:var(--text-main);">
+                    Start Date <span style="color:var(--danger);">*</span>
+                  </label>
+                  <input type="date" [(ngModel)]="form.fromDate" name="fromDate" required [min]="today"
+                    style="width:100%;border:1.5px solid var(--border);border-radius:9px;padding:0.7rem 0.85rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface);color:var(--text-main);" />
+                </div>
+                <div class="col-md-6">
+                  <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;color:var(--text-main);">
+                    End Date <span style="color:var(--danger);">*</span>
+                  </label>
+                  <input type="date" [(ngModel)]="form.toDate" name="toDate" required [min]="form.fromDate || today"
+                    style="width:100%;border:1.5px solid var(--border);border-radius:9px;padding:0.7rem 0.85rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;outline:none;background:var(--surface);color:var(--text-main);" />
+                </div>
+              </div>
+
+              <!-- Days summary -->
+              @if (getDays() > 0) {
+                <div style="margin-bottom:1rem;padding:0.7rem 1rem;border-radius:9px;font-size:0.85rem;display:flex;align-items:center;justify-content:space-between;"
+                     [style.background]="isBalanceInsufficient() ? 'rgba(239,68,68,0.08)' : 'rgba(16,185,129,0.08)'"
+                     [style.border]="'1px solid ' + (isBalanceInsufficient() ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)')">
+                  <span [style.color]="isBalanceInsufficient() ? '#dc2626' : '#059669'">
+                    <i [class]="isBalanceInsufficient() ? 'bi bi-exclamation-triangle-fill' : 'bi bi-check-circle-fill'"></i>
+                    {{ getDays() }} day(s) selected
+                  </span>
+                  @if (isBalanceInsufficient()) {
+                    <span style="color:#dc2626;font-weight:600;font-size:0.78rem;">Insufficient balance!</span>
+                  }
+                </div>
+              }
+
+              <!-- Reason -->
+              <div class="mb-4">
+                <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;color:var(--text-main);">
+                  Reason <span style="color:var(--danger);">*</span>
+                </label>
+                <textarea [(ngModel)]="form.reason" name="reason" required rows="4"
+                  style="width:100%;border:1.5px solid var(--border);border-radius:9px;padding:0.7rem 0.85rem;font-size:0.85rem;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;background:var(--surface);color:var(--text-main);"
+                  placeholder="Briefly describe the reason for your leave..."></textarea>
+              </div>
+
+              <!-- Actions -->
+              <div class="d-flex gap-2">
+                <button type="submit" [disabled]="isSubmitting() || isBalanceInsufficient()"
+                  style="background:var(--primary);color:#fff;border:none;padding:0.7rem 1.75rem;border-radius:9px;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:0.5rem;transition:all 0.2s;"
+                  [style.opacity]="(isSubmitting() || isBalanceInsufficient()) ? '0.6' : '1'">
+                  @if (isSubmitting()) {
+                    <span class="spinner-border spinner-border-sm"></span> Submitting...
+                  } @else {
+                    <i class="bi bi-send-fill"></i> Submit
+                  }
+                </button>
+                <button type="button" (click)="router.navigate(['/' + getRole()])"
+                  style="background:var(--bg);color:var(--text-main);border:1.5px solid var(--border);padding:0.7rem 1.5rem;border-radius:9px;font-weight:600;font-size:0.88rem;cursor:pointer;">
+                  Cancel
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,175 @@
+<div class="d-flex">
+  <app-sidebar role="EMPLOYEE" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">My Profile</div>
+        <div class="page-breadcrumb">Home / Profile</div>
+      </div>
+      <div class="topbar-right">
+        <a href="#" class="icon-btn"><i class="bi bi-search"></i></a>
+        <a href="#" class="icon-btn"><i class="bi bi-bell"></i><span class="dot"></span></a>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      @if (successMsg()) {
+        <div style="background:rgba(16,185,129,0.1);color:#059669;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;">
+          <i class="bi bi-check-circle"></i> {{ successMsg() }}
+        </div>
+      }
+
+      @if (errorMsg()) {
+        <div style="background:rgba(239,68,68,0.1);color:#dc2626;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:0.85rem;">
+          <i class="bi bi-exclamation-circle"></i> {{ errorMsg() }}
+        </div>
+      }
+
+      @if (isLoading()) {
+        <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+      } @else if (profile()) {
+        <div class="row">
+          <div class="col-lg-4">
+            <div class="card-panel text-center">
+              <div style="width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#c07d1a);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;font-weight:700;margin:0 auto 1rem;">
+                {{ getInitials(profile().firstName + ' ' + profile().lastName) }}
+              </div>
+              <h3 style="font-size:1.5rem;font-weight:700;margin-bottom:0.25rem;">{{ profile().firstName }} {{ profile().lastName }}</h3>
+              <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1rem;">{{ profile().designationTitle || 'N/A' }}</p>
+              <div style="display:inline-block;background:rgba(16,185,129,0.1);color:#059669;padding:0.35rem 0.85rem;border-radius:6px;font-size:0.8rem;font-weight:600;margin-bottom:1rem;">
+                {{ profile().status || 'ACTIVE' }}
+              </div>
+              <div>
+                <button class="btn-primary-sm" (click)="showPasswordSection.set(!showPasswordSection())" style="width:100%;">
+                  <i class="bi bi-key"></i> Change Password
+                </button>
+              </div>
+            </div>
+
+            @if (showPasswordSection()) {
+              <div class="card-panel" style="margin-top:1rem;">
+                <div class="card-panel-header">
+                  <div class="card-panel-title"><i class="bi bi-shield-lock"></i> Change Password</div>
+                  <button class="btn-sm-action btn-reject" (click)="showPasswordSection.set(false)"><i class="bi bi-x-lg"></i></button>
+                </div>
+
+                @if (passwordError()) {
+                  <div style="background:rgba(239,68,68,0.1);color:#dc2626;padding:0.75rem 1rem;border-radius:8px;margin:1rem;font-size:0.85rem;">
+                    <i class="bi bi-exclamation-circle"></i> {{ passwordError() }}
+                  </div>
+                }
+
+                <form #passwordForm="ngForm" (ngSubmit)="changePassword()" style="padding:1rem;">
+                  <div class="mb-3">
+                    <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Current Password</label>
+                    <input type="password" [(ngModel)]="passwordData.currentPassword" name="currentPassword" required
+                      style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;" />
+                  </div>
+                  <div class="mb-3">
+                    <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">New Password</label>
+                    <input type="password" [(ngModel)]="passwordData.newPassword" name="newPassword" required
+                      style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;" />
+                  </div>
+                  <div class="mb-3">
+                    <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Confirm New Password</label>
+                    <input type="password" [(ngModel)]="passwordData.confirmPassword" name="confirmPassword" required
+                      style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;" />
+                  </div>
+                  <button type="submit" class="btn-primary-sm" style="width:100%;" [disabled]="isChangingPassword()">
+                    @if (isChangingPassword()) {
+                      <span class="spinner-border spinner-border-sm" style="margin-right:0.5rem;"></span>
+                    }
+                    {{ isChangingPassword() ? 'Updating...' : 'Update Password' }}
+                  </button>
+                </form>
+              </div>
+            }
+          </div>
+
+          <div class="col-lg-8">
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title"><i class="bi bi-person-circle"></i> Personal Information</div>
+                <button class="btn-primary-sm" (click)="toggleEdit()">
+                  <i [class]="isEditing() ? 'bi bi-x-lg' : 'bi bi-pencil'"></i> {{ isEditing() ? 'Cancel' : 'Edit' }}
+                </button>
+              </div>
+
+              @if (!isEditing()) {
+                <div style="padding:1.5rem;">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Employee ID</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().employeeId }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Name</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().firstName }} {{ profile().lastName }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Email</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Phone</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().phone || 'Not provided' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Department</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().departmentName || 'N/A' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Designation</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().designationTitle || 'N/A' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Manager</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().manager ? (profile().manager.firstName + ' ' + profile().manager.lastName) : 'Not assigned' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Joining Date</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().joiningDate | date:'dd MMM yyyy' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Emergency Contact</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().emergencyContact || 'Not provided' }}</div>
+                    </div>
+                    <div class="col-12">
+                      <div style="margin-bottom:0.25rem;font-size:0.75rem;color:var(--text-muted);font-weight:600;">Address</div>
+                      <div style="font-size:0.95rem;color:var(--text-main);">{{ profile().address || 'Not provided' }}</div>
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <form #profileForm="ngForm" (ngSubmit)="saveProfile()" style="padding:1.5rem;">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Phone <span style="color:#ef4444;">*</span></label>
+                      <input type="tel" [(ngModel)]="editData.phone" name="phone" required
+                        style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;" />
+                    </div>
+                    <div class="col-md-6">
+                      <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Emergency Contact</label>
+                      <input type="tel" [(ngModel)]="editData.emergencyContact" name="emergencyContact"
+                        style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;" />
+                    </div>
+                    <div class="col-12">
+                      <label style="display:block;font-weight:600;margin-bottom:0.5rem;font-size:0.85rem;">Address</label>
+                      <textarea [(ngModel)]="editData.address" name="address" rows="3"
+                        style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.65rem;font-size:0.85rem;outline:none;resize:vertical;"></textarea>
+                    </div>
+                  </div>
+                  <div style="margin-top:1rem;">
+                    <button type="submit" class="btn-primary-sm">Save Changes</button>
+                  </div>
+                </form>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

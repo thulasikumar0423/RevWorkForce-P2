@@ -1,0 +1,85 @@
+<div class="d-flex">
+  <app-sidebar role="ADMIN" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Department Management</div>
+        <div class="page-breadcrumb">Home / Admin / Departments</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-primary-sm" (click)="openAddModal()">
+          <i class="bi bi-plus-lg"></i> Add Department
+        </button>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title"><i class="bi bi-building"></i> All Departments</div>
+        </div>
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr><th>Department Name</th><th>Description</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              @for (dept of departments(); track dept.id) {
+                <tr>
+                  <td><strong>{{ dept.name }}</strong></td>
+                  <td>{{ dept.description }}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button class="btn-sm-action btn-edit" (click)="openEditModal(dept)">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                      <button class="btn-sm-action btn-deact" (click)="deleteDepartment(dept.id)">
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @empty {
+                <tr><td colspan="3" class="text-center p-4 text-muted">No departments found</td></tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (showModal()) {
+    <div class="modal-overlay" (click)="showModal.set(false)">
+      <div class="modal-container" (click)="$event.stopPropagation()" style="max-width:500px;">
+        <div class="modal-header">
+          <h3 class="modal-title">{{ editMode() ? 'Edit' : 'Add' }} Department</h3>
+          <button type="button" (click)="showModal.set(false)" class="modal-close">&times;</button>
+        </div>
+        <form (ngSubmit)="saveDepartment()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Department Name *</label>
+              <input type="text" [(ngModel)]="currentDept.name" name="name" required class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea [(ngModel)]="currentDept.description" name="description" rows="3" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="showModal.set(false)" class="btn-secondary-sm">Cancel</button>
+            <button type="submit" class="btn-primary-sm">
+              <i class="bi bi-check-circle"></i> {{ editMode() ? 'Update' : 'Add' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

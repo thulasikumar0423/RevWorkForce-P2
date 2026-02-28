@@ -1,0 +1,137 @@
+<div class="d-flex">
+  <app-sidebar role="ADMIN" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Leave Reports</div>
+        <div class="page-breadcrumb">Home / Admin / System Configuration / Reports</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar">{{ getInitials('Admin') }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title">Report Type</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn-secondary-sm" [class.active]="reportType() === 'department'" (click)="switchReport('department')">Department</button>
+            <button class="btn-secondary-sm" [class.active]="reportType() === 'employee'" (click)="switchReport('employee')">Employee</button>
+            <button class="btn-secondary-sm" [class.active]="reportType() === 'utilization'" (click)="switchReport('utilization')">Utilization</button>
+            <button class="btn-secondary-sm" [class.active]="reportType() === 'employeeReport'" (click)="switchReport('employeeReport')">All Employees</button>
+          </div>
+        </div>
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          @if ((reportType() === 'department' || reportType() === 'employee') && reports().length > 0) {
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:{{ reportType() === 'employee' ? '18%' : '20%' }};">{{ reportType() === 'department' ? 'Department' : 'Employee' }}</th>
+                    @if (reportType() === 'employee') { <th style="width:15%;">Department</th> }
+                    <th style="width:10%;">Total</th>
+                    <th style="width:12%;">Approved</th>
+                    <th style="width:12%;">Pending</th>
+                    <th style="width:12%;">Rejected</th>
+                    <th style="width:10%;">Casual</th>
+                    <th style="width:10%;">Sick</th>
+                    <th style="width:10%;">Paid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (report of reports(); track report.name) {
+                    <tr>
+                      <td style="white-space:nowrap;vertical-align:middle;"><strong>{{ report.name }}</strong></td>
+                      @if (reportType() === 'employee') { <td style="white-space:nowrap;vertical-align:middle;">{{ report.department }}</td> }
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.totalLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.approvedLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.pendingLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.rejectedLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.casualLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.sickLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.paidLeaves }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (reportType() === 'utilization' && reports().length > 0) {
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:30%;">Employee</th>
+                    <th style="width:20%;">Total Leaves Applied</th>
+                    <th style="width:20%;">Approved Leaves</th>
+                    <th style="width:30%;">Utilization Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (report of reports(); track report.name) {
+                    <tr>
+                      <td style="white-space:nowrap;vertical-align:middle;"><strong>{{ report.name }}</strong></td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.totalLeaves }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ report.approvedLeaves }}</td>
+                      <td style="vertical-align:middle;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                          <div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+                            <div style="height:100%;background:#3b82f6;border-radius:4px;" [style.width.%]="report.utilizationRate"></div>
+                          </div>
+                          <span style="font-weight:600;color:#3b82f6;white-space:nowrap;">{{ report.utilizationRate }}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (reportType() === 'employeeReport' && reports().length > 0) {
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:12%;">Employee ID</th>
+                    <th style="width:18%;">Name</th>
+                    <th style="width:20%;">Email</th>
+                    <th style="width:15%;">Department</th>
+                    <th style="width:15%;">Designation</th>
+                    <th style="width:10%;">Role</th>
+                    <th style="width:10%;">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (emp of reports(); track emp.employeeId) {
+                    <tr>
+                      <td style="white-space:nowrap;vertical-align:middle;"><strong>{{ emp.employeeId }}</strong></td>
+                      <td style="white-space:nowrap;vertical-align:middle;">{{ emp.name }}</td>
+                      <td style="white-space:nowrap;vertical-align:middle;">{{ emp.email }}</td>
+                      <td style="white-space:nowrap;vertical-align:middle;">{{ emp.departmentName || '-' }}</td>
+                      <td style="white-space:nowrap;vertical-align:middle;">{{ emp.designationTitle || '-' }}</td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;"><span class="badge-status" style="background:#8b5cf6;">{{ emp.role }}</span></td>
+                      <td style="white-space:nowrap;text-align:center;vertical-align:middle;"><span class="badge-status" [class.badge-active]="emp.active" [class.badge-inactive]="!emp.active">{{ emp.active ? 'Active' : 'Inactive' }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          @if (reports().length === 0) {
+            <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+              <i class="bi bi-file-earmark-text" style="font-size:3rem;display:block;margin-bottom:1rem;"></i>
+              <p>No data available for this report</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

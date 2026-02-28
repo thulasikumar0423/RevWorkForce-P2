@@ -1,0 +1,176 @@
+<div class="d-flex">
+  <app-sidebar role="ADMIN" />
+
+  <div class="main-content w-100">
+
+    <div class="topbar">
+      <div>
+        <div class="page-title">Employee Management</div>
+        <div class="page-breadcrumb">Home / Admin / Employees</div>
+      </div>
+
+      <div class="topbar-right">
+        <button class="btn-primary-sm" (click)="showAddModal.set(true)">
+          <i class="bi bi-person-plus"></i> Add Employee
+        </button>
+        <div class="topbar-avatar">
+          {{ getInitials(auth.currentUser()?.name) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <div class="card-panel">
+
+        <div class="card-panel-header">
+          <div class="card-panel-title">
+            <i class="bi bi-people"></i> All Employees
+          </div>
+
+          <input
+  type="text"
+  [(ngModel)]="searchTerm"
+  (input)="onSearch()"
+  placeholder="Search employees..."
+  style="border:1px solid var(--border);border-radius:8px;padding:0.5rem 1rem;width:300px;outline:none;"
+/>
+        </div>
+
+        @if (isLoading()) {
+          <div class="loading-spinner">
+            <div class="spinner-border text-primary"></div>
+          </div>
+        } @else {
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (emp of filteredEmployees(); track emp.id) {
+                <tr>
+
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+
+                      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:700;">
+                        {{ getInitials((emp.firstName || '') + ' ' + (emp.lastName || '')) }}
+                      </div>
+
+                      <div>
+                        <div style="font-weight:600;">
+                          {{ (emp.firstName || '') + ' ' + (emp.lastName || '') }}
+                        </div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">
+                          {{ emp.designationTitle }}
+                        </div>
+                      </div>
+
+                    </div>
+                  </td>
+
+                  <td>{{ emp.employeeId }}</td>
+                  <td>{{ emp.email }}</td>
+                  <td>{{ emp.departmentName }}</td>
+
+                  <td>
+                    <span class="badge-status"
+                          [class.badge-active]="emp.active"
+                          [class.badge-inactive]="!emp.active">
+                      {{ emp.active ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="d-flex gap-1">
+
+                      <button class="btn-sm-action btn-edit"
+                              (click)="editEmployee(emp)">
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+
+                      @if (emp.active) {
+                        <button class="btn-sm-action btn-deact"
+                                (click)="deactivate(emp.id)">
+                          <i class="bi bi-person-x"></i> Deactivate
+                        </button>
+                      } @else {
+                        <button class="btn-sm-action btn-react"
+                                (click)="reactivate(emp.id)">
+                          <i class="bi bi-person-check"></i> Activate
+                        </button>
+                      }
+
+                    </div>
+                  </td>
+
+                </tr>
+              }
+
+              @empty {
+                <tr>
+                  <td colspan="6"
+                      class="text-center p-4 text-muted">
+                    No employees found
+                  </td>
+                </tr>
+              }
+
+              @if (showAddModal()) {
+  <div class="modal-overlay" (click)="showAddModal.set(false)">
+    <div class="modal-container" (click)="$event.stopPropagation()" style="max-width:700px;">
+      
+      <div class="modal-header">
+        <h3 class="modal-title">
+          {{ editingEmployeeId ? 'Edit Employee' : 'Add Employee' }}
+        </h3>
+        <button type="button" (click)="showAddModal.set(false)" class="modal-close">
+          &times;
+        </button>
+      </div>
+
+      <form (ngSubmit)="addEmployee()">
+        <div class="modal-body">
+
+          <!-- KEEP YOUR FULL FORM HERE -->
+          <!-- (Use the same form you already had) -->
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button"
+                  (click)="showAddModal.set(false)"
+                  class="btn-secondary-sm">
+            Cancel
+          </button>
+
+          <button type="submit" class="btn-primary-sm">
+            {{ editingEmployeeId ? 'Update Employee' : 'Add Employee' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}
+
+            </tbody>
+          </table>
+
+        }
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

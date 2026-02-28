@@ -1,0 +1,51 @@
+<div class="d-flex">
+  <app-sidebar [role]="getRole()" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Notifications</div>
+        <div class="page-breadcrumb">Home / Notifications</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-primary-sm" (click)="markAllAsRead()"><i class="bi bi-check-all"></i> Mark All Read</button>
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <div style="padding:0.5rem;">
+            @for (notif of notifications(); track notif.id) {
+              <div class="notif-item" [class.unread]="!notif.isRead" (click)="markAsRead(notif.id)"
+                style="cursor:pointer;padding:1rem;border-bottom:1px solid var(--border);transition:background 0.2s;"
+                [style.background]="notif.isRead ? 'transparent' : 'rgba(59,130,246,0.05)'">
+                <div style="display:flex;gap:1rem;">
+                  <div class="notif-dot" [class.read]="notif.isRead"
+                    style="width:10px;height:10px;border-radius:50%;margin-top:0.5rem;flex-shrink:0;"
+                    [style.background]="notif.isRead ? 'var(--border)' : 'var(--accent)'"></div>
+                  <div style="flex:1;">
+                    <div class="notif-text" [innerHTML]="notif.message" style="font-size:0.9rem;color:var(--text-main);margin-bottom:0.25rem;"></div>
+                    <div class="notif-time" style="font-size:0.75rem;color:var(--text-muted);">{{ notif.createdAt }}</div>
+                  </div>
+                  @if (!notif.isRead) {
+                    <button class="btn-sm-action btn-approve" (click)="markAsRead(notif.id); $event.stopPropagation()"
+                      style="align-self:center;">
+                      <i class="bi bi-check"></i>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="text-center text-muted p-4">No notifications yet.</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

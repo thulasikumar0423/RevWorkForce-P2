@@ -1,0 +1,59 @@
+<div class="d-flex">
+  <app-sidebar [role]="getRole()" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Employee Directory</div>
+        <div class="page-breadcrumb">Home / Directory</div>
+      </div>
+      <div class="topbar-right">
+        <input type="text" placeholder="Search employees..." (input)="onSearch($any($event.target).value)"
+          style="border:1px solid var(--border);border-radius:8px;padding:0.5rem 1rem;font-size:0.85rem;outline:none;width:250px;" />
+        <div class="topbar-avatar">{{ getInitials(auth.currentUser()?.name) }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <div class="row g-3" style="padding:1rem;">
+            @for (emp of filteredEmployees(); track emp.id; let i = $index) {
+              <div class="col-md-6 col-lg-4">
+                <div style="border:1px solid var(--border);border-radius:12px;padding:1.25rem;background:var(--bg-main);display:flex;gap:1rem;align-items:center;">
+                  <div style="width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;font-weight:700;flex-shrink:0;"
+                    [style.background]="getAvatarColor(i)">
+                    {{ getInitials(emp.name) }}
+                  </div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-weight:700;font-size:0.95rem;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                      {{ emp.name }}
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin:0.25rem 0;">{{ emp.designation }}</div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">
+                      <i class="bi bi-building"></i> {{ emp.department }}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+                      <i class="bi bi-envelope"></i> {{ emp.email }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="col-12 text-center text-muted p-4">
+                @if (searchTerm()) {
+                  No employees found matching "{{ searchTerm() }}"
+                } @else {
+                  No employees in directory
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

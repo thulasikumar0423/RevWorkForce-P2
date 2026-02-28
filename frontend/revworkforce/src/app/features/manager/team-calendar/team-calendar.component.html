@@ -1,0 +1,119 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Team Leave Calendar</div>
+        <div class="page-breadcrumb">Manager / Team Calendar</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">{{ getInitials(auth.currentUser()?.name || '') }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="row g-3">
+
+        <!-- Calendar -->
+        <div class="col-lg-9">
+          <div class="card-panel">
+            <!-- Calendar Header -->
+            <div class="cal-nav">
+              <button class="cal-nav-btn" (click)="prevMonth()"><i class="bi bi-chevron-left"></i></button>
+              <div class="cal-month-title">{{ monthName }}</div>
+              <button class="cal-nav-btn" (click)="nextMonth()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+
+            <!-- Day Labels -->
+            <div class="cal-grid-header">
+              @for (d of ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; track d) {
+                <div class="cal-grid-day-label">{{ d }}</div>
+              }
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="cal-grid">
+              <!-- Empty cells -->
+              @for (e of emptyDays; track e) {
+                <div class="cal-cell-empty"></div>
+              }
+
+              <!-- Day cells -->
+              @for (day of calDays; track day) {
+                <div class="cal-day-cell"
+                  [class.today]="isToday(day)"
+                  [class.weekend]="isWeekend(day)">
+                  <div class="day-number">{{ day }}</div>
+                  <div class="day-leaves">
+                    @for (leave of getLeavesOnDay(day).slice(0,3); track leave.employeeId) {
+                      @let member = getMemberById(leave.employeeId);
+                      @if (member) {
+                        <div class="leave-pill"
+                          [style.background]="leave.status === 'PENDING' ? 'rgba(245,158,11,0.15)' : member.color + '22'"
+                          [style.color]="leave.status === 'PENDING' ? '#d97706' : member.color"
+                          [style.border]="'1px solid ' + (leave.status === 'PENDING' ? 'rgba(245,158,11,0.3)' : member.color + '44')"
+                          [title]="member.name + ' - ' + leave.type">
+                          {{ member.initials }} · {{ leave.type }}
+                        </div>
+                      }
+                    }
+                    @if (getLeavesOnDay(day).length > 3) {
+                      <div class="leave-pill-more">+{{ getLeavesOnDay(day).length - 3 }} more</div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Legend -->
+            <div class="cal-legend">
+              @for (m of teamMembers; track m.id) {
+                <div class="legend-item">
+                  <div class="legend-dot" [style.background]="m.color"></div>
+                  <span>{{ m.name }}</span>
+                </div>
+              }
+              <div class="legend-item">
+                <div class="legend-dot" style="background:rgba(245,158,11,0.5);border:1px solid #d97706;"></div>
+                <span>Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Summary -->
+        <div class="col-lg-3">
+          <!-- Leave types legend -->
+          <div class="card-panel mb-3">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-info-circle"></i> Leave Types</div>
+            </div>
+            <div style="padding:1rem 1.25rem;">
+              <div class="legend-type-row"><div class="legend-type-chip" style="background:rgba(59,130,246,0.1);color:#3b82f6;">CL</div> Casual Leave</div>
+              <div class="legend-type-row"><div class="legend-type-chip" style="background:rgba(16,185,129,0.1);color:#10b981;">SL</div> Sick Leave</div>
+              <div class="legend-type-row"><div class="legend-type-chip" style="background:rgba(245,158,11,0.1);color:#f59e0b;">PL</div> Paid Leave</div>
+            </div>
+          </div>
+
+          <!-- Month summary -->
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-bar-chart"></i> Month Summary</div>
+            </div>
+            @if (getLeaveSummary().length === 0) {
+              <div class="text-center p-3" style="color:var(--text-muted);font-size:0.82rem;">No leaves this month.</div>
+            }
+            @for (s of getLeaveSummary(); track s.name) {
+              <div style="padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;">
+                <div style="width:10px;height:10px;border-radius:3px;flex-shrink:0;" [style.background]="s.color"></div>
+                <div style="flex:1;font-size:0.82rem;color:var(--text-main);font-weight:500;">{{ s.name }}</div>
+                <div style="font-size:0.78rem;font-weight:700;color:var(--primary);">{{ s.count }} leave(s)</div>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,122 @@
+<div class="login-wrapper">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="brand">
+      <div class="brand-icon-lg"><i class="bi bi-people-fill"></i></div>
+      <div class="brand-name">Rev<span>Workforce</span></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-tag"><i class="bi bi-lightning-charge-fill"></i>&nbsp; HR Management Platform</div>
+      <h1 class="hero-title">People Operations,<br><em>Simplified.</em></h1>
+      <p class="hero-desc">Manage workforce, leaves, and performance reviews from one intelligent platform. Built for modern teams.</p>
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-num">3</div>
+          <div class="stat-lbl">User Roles</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">360°</div>
+          <div class="stat-lbl">Performance</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Live</div>
+          <div class="stat-lbl">Notifications</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="feature-chips">
+      <div class="chip"><i class="bi bi-calendar-check"></i> Leave Tracking</div>
+      <div class="chip"><i class="bi bi-bar-chart-line"></i> Performance Reviews</div>
+      <div class="chip"><i class="bi bi-bell"></i> Instant Alerts</div>
+      <div class="chip"><i class="bi bi-shield-lock"></i> Role-Based Access</div>
+      <div class="chip"><i class="bi bi-people"></i> Team Management</div>
+      <div class="chip"><i class="bi bi-graph-up"></i> HR Analytics</div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Welcome back</h2>
+        <p>Sign in to your RevWorkforce account</p>
+      </div>
+
+      <!-- Role Tabs -->
+      <div class="role-tabs">
+        <button class="role-tab" [class.active]="selectedRole() === 'EMPLOYEE'" (click)="setRole('EMPLOYEE')">
+          <i class="bi bi-person"></i> Employee
+        </button>
+        <button class="role-tab" [class.active]="selectedRole() === 'MANAGER'" (click)="setRole('MANAGER')">
+          <i class="bi bi-person-badge"></i> Manager
+        </button>
+        <button class="role-tab" [class.active]="selectedRole() === 'ADMIN'" (click)="setRole('ADMIN')">
+          <i class="bi bi-shield-person"></i> Admin
+        </button>
+      </div>
+
+      <!-- Role hint -->
+      <!-- <div class="role-hint">
+        @if (selectedRole() === 'EMPLOYEE') {
+          <i class="bi bi-info-circle"></i> Login with your Employee ID or registered email
+        }
+        @if (selectedRole() === 'MANAGER') {
+          <i class="bi bi-info-circle"></i> Login as employee or manager using Employee ID or email
+        }
+        @if (selectedRole() === 'ADMIN') {
+          <i class="bi bi-info-circle"></i> Login with your admin email address
+        }
+      </div> -->
+
+      <!-- Error -->
+      @if (errorMsg()) {
+        <div class="alert-error">
+          <i class="bi bi-exclamation-circle-fill"></i> {{ errorMsg() }}
+        </div>
+      }
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()">
+        <label class="form-label">
+          @if (selectedRole() === 'ADMIN') { Email Address }
+          @else { Employee ID or Email }
+        </label>
+        <div class="input-group-custom">
+          <i class="bi bi-person input-icon"></i>
+          <input type="text" class="form-control-custom"
+            [(ngModel)]="credentials.identifier" name="identifier"
+            [placeholder]="selectedRole() === 'ADMIN' ? 'Enter admin email' : 'Enter Employee ID or email'"
+            required />
+        </div>
+
+        <label class="form-label">Password</label>
+        <div class="input-group-custom">
+          <i class="bi bi-lock input-icon"></i>
+          <input [type]="showPassword() ? 'text' : 'password'"
+            class="form-control-custom"
+            [(ngModel)]="credentials.password" name="password"
+            placeholder="Enter your password" required />
+          <button type="button" class="toggle-pass" (click)="togglePassword()">
+            <i [class]="showPassword() ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+          </button>
+        </div>
+
+       
+
+        <button type="submit" class="btn-login" [disabled]="isLoading()">
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            @if (isLookingUp()) { Looking up Employee ID... }
+            @else { Signing in... }
+          } @else {
+            <i class="bi bi-box-arrow-in-right"></i> Sign In as {{ selectedRole() | titlecase }}
+          }
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>

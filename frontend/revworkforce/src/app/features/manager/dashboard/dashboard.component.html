@@ -1,0 +1,327 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Manager Dashboard</div>
+        <div class="page-breadcrumb">Home / Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="icon-btn" (click)="toggleSearch()"><i class="bi bi-search"></i></div>
+        <div style="position:relative;">
+          <div class="icon-btn" (click)="toggleNotifications()">
+            <i class="bi bi-bell"></i><span class="dot"></span>
+          </div>
+          @if (showNotifications()) {
+            <div style="position:absolute;right:0;top:42px;width:240px;background:#fff;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.1);padding:0.75rem;z-index:1000;">
+              <div style="font-weight:600;margin-bottom:0.5rem;">Notifications</div>
+              <div style="font-size:0.85rem;color:var(--text-muted);">No new notifications</div>
+            </div>
+          }
+        </div>
+        <div class="topbar-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
+          {{ getInitials(auth.currentUser()?.name) }}
+        </div>
+      </div>
+    </div>
+
+    @if (showSearch()) {
+      <div style="padding:0.75rem 1rem;">
+        <input type="text" placeholder="Search..." style="width:260px;padding:0.45rem 0.75rem;border-radius:8px;border:1px solid var(--border);outline:none;" />
+      </div>
+    }
+
+    <div class="content-area">
+
+      <!-- Action Error Banner -->
+      @if (actionError()) {
+        <div style="background:rgba(239,68,68,0.1);color:#dc2626;padding:0.85rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;">
+          <i class="bi bi-exclamation-circle-fill"></i> {{ actionError() }}
+        </div>
+      }
+
+      <!-- Greeting Banner -->
+      <div class="greeting-banner manager-banner">
+        <div class="greeting-text">
+          <h2>Good Morning, {{ auth.currentUser()?.name || auth.currentUser()?.firstName || 'Manager' }} 👋</h2>
+          <p>You have <strong style="color:var(--accent);">{{ pendingLeaves().length }} pending leave approvals</strong> awaiting your action.</p>
+        </div>
+        <div class="banner-pills">
+          <div class="banner-pill"><i class="bi bi-people"></i> {{ teamMembers().length }} Reportees</div>
+          <div class="banner-pill"><i class="bi bi-calendar-check"></i> {{ pendingLeaves().length }} Pending</div>
+        </div>
+      </div>
+
+      <!-- ── Stat Cards ── -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+            <div class="stat-value">{{ teamMembers().length }}</div>
+            <div class="stat-label">Direct Reportees</div>
+            <div class="stat-sublabel"><span class="tag tag-success">Active team</span></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-value">{{ pendingLeaves().length }}</div>
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-sublabel"><span class="tag tag-warning">Action required</span></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-value">{{ reviews().length }}</div>
+            <div class="stat-label">Reviews Pending</div>
+            <div class="stat-sublabel"><span class="tag tag-info">Q1 cycle</span></div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-calendar2-week"></i></div>
+            <div class="stat-value">{{ getTotalBalance() }}</div>
+            <div class="stat-label">My Leave Balance</div>
+            <div class="stat-sublabel"><span class="tag tag-success">Available days</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── My Leave Balances (Manager as Employee) ── -->
+      @if (myLeaveBalances().length > 0) {
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <div class="section-header">
+              <div class="section-title">My Leave Balances</div>
+              <a routerLink="/manager/apply-leave" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Apply Leave</a>
+            </div>
+            <div class="card-panel">
+              <div class="card-panel-header">
+                <div class="card-panel-title"><i class="bi bi-calendar-heart"></i> Available Leave by Type</div>
+              </div>
+              <div class="row g-3" style="padding:0.5rem 0;">
+                @for (balance of myLeaveBalances(); track balance.leaveTypeId; let i = $index) {
+                  <div class="col-sm-6 col-lg-4">
+                    <div style="background:var(--bg);border-radius:12px;padding:1rem 1.1rem;border:1px solid var(--border);">
+                      <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div style="font-weight:600;font-size:0.85rem;color:var(--text-main);">{{ balance.leaveTypeName }}</div>
+                        <span style="font-size:0.72rem;font-weight:700;padding:0.18rem 0.55rem;border-radius:8px;"
+                          [style.background]="balance.remaining > 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'"
+                          [style.color]="balance.remaining > 0 ? '#059669' : '#dc2626'">
+                          {{ balance.remaining > 0 ? 'Available' : 'Exhausted' }}
+                        </span>
+                      </div>
+                      <div style="height:5px;background:rgba(0,0,0,0.06);border-radius:3px;overflow:hidden;margin-bottom:0.5rem;">
+                        <div [style.width]="getBarWidth(balance)"
+                             [style.background]="balanceColors[i % balanceColors.length]"
+                             style="height:100%;border-radius:3px;transition:width 0.6s ease;">
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between" style="font-size:0.8rem;color:var(--text-muted);">
+                        <span><strong style="color:var(--text-main);">{{ balance.remaining }}</strong> remaining</span>
+                        <span>{{ balance.used }} used / {{ balance.totalQuota }} total</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ── Pending Leaves + Team Members ── -->
+      <div class="row g-3 mb-4">
+
+        <!-- Pending Leave Approvals -->
+        <div class="col-lg-7">
+          <div class="section-header">
+            <div class="section-title">Pending Leave Approvals</div>
+            <a routerLink="/manager/leave-approvals" class="btn-view-all"><i class="bi bi-arrow-right"></i> All Leaves</a>
+          </div>
+          <div class="card-panel">
+            @if (isLoading()) {
+              <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            } @else {
+              <table class="data-table">
+                <thead>
+                  <tr><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                  @for (leave of pendingLeaves(); track leave.id) {
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.68rem;font-weight:700;">
+                            {{ getInitials(leave.employeeName) }}
+                          </div>
+                          <div>
+                            <div style="font-weight:600;font-size:0.83rem;">{{ leave.employeeName }}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">{{ leave.reason }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span style="font-size:0.78rem;background:rgba(59,130,246,0.1);color:var(--primary);padding:0.2rem 0.5rem;border-radius:6px;font-weight:600;">{{ leave.leaveType }}</span></td>
+                      <td style="font-size:0.78rem;">{{ leave.startDate | date:'dd MMM' }} – {{ leave.endDate | date:'dd MMM' }}</td>
+                      <td><strong>{{ leave.days }}</strong></td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <button class="btn-sm-action btn-approve" (click)="approve(leave.id)">
+                            <i class="bi bi-check-lg"></i> Approve
+                          </button>
+                          <button class="btn-sm-action btn-reject" (click)="reject(leave.id)">
+                            <i class="bi bi-x-lg"></i> Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                  @empty {
+                    <tr><td colspan="5" class="text-center text-muted p-4">No pending approvals. 🎉</td></tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="col-lg-5">
+          <div class="section-header">
+            <div class="section-title">My Team</div>
+            <a routerLink="/manager/team" class="btn-view-all"><i class="bi bi-arrow-right"></i> View All</a>
+          </div>
+          <div class="row g-2">
+            @for (member of teamMembers().slice(0, 4); track member.id; let i = $index) {
+              <div class="col-6">
+                <div class="team-member-card">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="tm-avatar" [style.background]="getAvatarColor(i)">{{ getInitials(getMemberName(member)) }}</div>
+                    <div>
+                      <div class="tm-name">{{ getMemberName(member) }}</div>
+                      <div class="tm-role">{{ member.designationTitle || member.designation || member.role }}</div>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <div [class.status-online]="member.active" [class.status-offline]="!member.active"></div>
+                    <span style="font-size:0.72rem;color:var(--text-muted);">{{ member.active ? 'Active' : 'Inactive' }}</span>
+                  </div>
+                  <div>
+                    <a [routerLink]="['/manager/team']" class="btn-sm-action btn-view-p"><i class="bi bi-eye"></i> Profile</a>
+                  </div>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="col-12">
+                <div class="card-panel text-center p-4 text-muted" style="font-size:0.85rem;">
+                  <i class="bi bi-people" style="font-size:2rem;display:block;margin-bottom:0.5rem;"></i>
+                  No team members found.
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Performance Reviews + Team Calendar ── -->
+      <div class="row g-3">
+
+        <!-- Performance Reviews -->
+        <div class="col-lg-5">
+          <div class="section-header">
+            <div class="section-title">Performance Reviews</div>
+            <a routerLink="/manager/reviews" class="btn-view-all"><i class="bi bi-arrow-right"></i> View All</a>
+          </div>
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-file-earmark-text"></i> Awaiting Feedback</div>
+              <span style="background:rgba(239,68,68,0.1);color:#dc2626;font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:6px;">
+                {{ reviews().length }} Pending
+              </span>
+            </div>
+            @for (review of reviews(); track review.id || $index) {
+              <div class="review-item">
+                <div class="review-header">
+                  <div>
+                    <div class="review-name">
+                      {{ review.employeeName || (review.user?.firstName + ' ' + review.user?.lastName) || 'Employee' }}
+                      — {{ review.year || 'Q1' }}
+                    </div>
+                    <div class="review-period">Status: {{ review.status }}</div>
+                  </div>
+                  <span class="badge-status"
+                    [class.badge-pending]="review.status === 'SUBMITTED' || review.status === 'DRAFT'"
+                    [class.badge-approved]="review.status === 'REVIEWED'">
+                    {{ review.status }}
+                  </span>
+                </div>
+                @if (review.status === 'REVIEWED' && review.managerRating) {
+                  <div class="star-rating">{{ getStars(review.managerRating) }} <span style="color:var(--text-muted);font-size:0.75rem;">{{ review.managerRating }}/5</span></div>
+                } @else {
+                  <div class="rating-pending">No manager rating yet</div>
+                  <div class="d-flex gap-2 mt-2">
+                    <a [routerLink]="['/manager/reviews']" class="btn-sm-action btn-approve" style="padding:0.35rem 0.85rem;">
+                      <i class="bi bi-chat-left-text"></i> Give Feedback
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+            @empty {
+              <div class="text-center p-4 text-muted" style="font-size:0.85rem;">No reviews awaiting feedback.</div>
+            }
+          </div>
+        </div>
+
+        <!-- Team Leave Calendar -->
+        <div class="col-lg-7">
+          <div class="section-header">
+            <div class="section-title">Team Leave Calendar</div>
+            <a routerLink="/manager/team-calendar" class="btn-view-all"><i class="bi bi-arrow-right"></i> Full Calendar</a>
+          </div>
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-calendar3-week"></i> This Week</div>
+              <div class="d-flex gap-3" style="font-size:0.72rem;">
+                <span style="color:var(--info);display:flex;align-items:center;gap:0.3rem;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:rgba(59,130,246,0.25);display:inline-block;"></span> On Leave
+                </span>
+                <span style="color:var(--warning);display:flex;align-items:center;gap:0.3rem;">
+                  <span style="width:10px;height:10px;border-radius:3px;background:rgba(245,158,11,0.25);display:inline-block;"></span> Pending
+                </span>
+              </div>
+            </div>
+            <div style="padding:1rem;">
+              <div class="cal-header">
+                <div></div>
+                @for (day of weekDays; track day) {
+                  <div class="cal-day-label">{{ day }}</div>
+                }
+              </div>
+              @if (calData.length > 0) {
+                @for (row of calData; track row.name) {
+                  <div class="cal-row">
+                    <div class="cal-name">
+                      <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.6rem;font-weight:700;"
+                        [style.background]="row.color">{{ row.initials }}</div>
+                      {{ row.name }}
+                    </div>
+                    @for (day of row.days; track $index) {
+                      <div class="cal-cell" [class]="day"></div>
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="text-center p-3 text-muted" style="font-size:0.85rem;">No team members to display.</div>
+              }
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

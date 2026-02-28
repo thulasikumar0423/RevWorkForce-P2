@@ -1,0 +1,265 @@
+<div class="d-flex">
+  <app-sidebar role="ADMIN" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Admin Dashboard</div>
+        <div class="page-breadcrumb">Home / Admin / Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <!-- Search Icon -->
+<div class="icon-btn" (click)="toggleSearch()">
+  <i class="bi bi-search"></i>
+</div>
+
+<!-- Notification Icon -->
+<div style="position:relative;">
+  <div class="icon-btn" (click)="toggleNotifications()">
+    <i class="bi bi-bell"></i>
+    <span class="dot"></span>
+  </div>
+
+  @if (showNotifications()) {
+    <div style="position:absolute;right:0;top:42px;width:240px;background:#fff;border-radius:10px;
+                box-shadow:0 10px 25px rgba(0,0,0,0.1);padding:0.75rem;z-index:1000;">
+      <div style="font-weight:600;margin-bottom:0.5rem;">Notifications</div>
+      <div style="font-size:0.85rem;color:var(--text-muted);">
+        No new notifications
+      </div>
+    </div>
+  }
+</div>
+        <a routerLink="/admin/employees" class="btn-primary-sm"><i class="bi bi-person-plus"></i> Manage Employees</a>
+        <div class="topbar-avatar" style="background:linear-gradient(135deg,var(--accent),#c07d1a);">
+          {{ getInitials(auth.currentUser()?.name) }}
+        </div>
+      </div>
+    </div>
+    @if (showSearch()) {
+  <div style="padding:0.75rem 1rem;">
+    <input
+      type="text"
+      placeholder="Search..."
+      style="width:260px;padding:0.45rem 0.75rem;
+             border-radius:8px;border:1px solid var(--border);
+             outline:none;" />
+  </div>
+}
+    <div class="content-area">
+
+      <!-- Banner -->
+      <div class="greeting-banner admin-banner">
+        <div class="greeting-text">
+          <h2>Admin Control Center 🛡️</h2>
+          <p>Monitor your workforce, manage leaves, configure system settings and generate reports.</p>
+        </div>
+        <div class="banner-stats">
+          <div class="bstat"><div class="bstat-num">{{ stats().total }}</div><div class="bstat-label">Total Employees</div></div>
+          <div class="bstat"><div class="bstat-num">{{ stats().departments }}</div><div class="bstat-label">Departments</div></div>
+          <div class="bstat"><div class="bstat-num">{{ stats().active > 0 ? ((stats().active / stats().total) * 100).toFixed(0) : 0 }}%</div><div class="bstat-label">Active Rate</div></div>
+        </div>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-value">{{ stats().total }}</div>
+            <div class="stat-label">Total Employees</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-person-check"></i></div>
+            <div class="stat-value">{{ stats().active }}</div>
+            <div class="stat-label">Active Employees</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-person-dash"></i></div>
+            <div class="stat-value">{{ stats().inactive }}</div>
+            <div class="stat-label">Deactivated</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon amber"><i class="bi bi-calendar2-x"></i></div>
+            <div class="stat-value">{{ stats().onLeave }}</div>
+            <div class="stat-label">On Leave Today</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon teal"><i class="bi bi-building"></i></div>
+            <div class="stat-value">{{ stats().departments }}</div>
+            <div class="stat-label">Departments</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-2">
+          <div class="stat-card">
+            <div class="stat-icon pink"><i class="bi bi-graph-up-arrow"></i></div>
+            <div class="stat-value">{{ stats().openReviews }}</div>
+            <div class="stat-label">Open Reviews</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Employee Table + Dept Leave -->
+      <div class="row g-3 mb-4">
+
+        <!-- Employee Table -->
+        <div class="col-lg-8">
+          <div class="section-header">
+            <div class="section-title">Recent Employees</div>
+            <div class="d-flex gap-2">
+              <a routerLink="/admin/employees" class="btn-view-all"><i class="bi bi-arrow-right"></i> All Employees</a>
+              <a routerLink="/admin/employees" class="btn-primary-sm"><i class="bi bi-person-plus"></i> Add New</a>
+            </div>
+          </div>
+          <div class="card-panel">
+            <div class="card-panel-header">
+              <div class="card-panel-title"><i class="bi bi-people"></i> Employee List</div>
+              <div class="d-flex gap-2">
+                <input
+  type="text"
+  [ngModel]="searchTerm()"
+(ngModelChange)="searchTerm.set($event); onSearch()"
+  placeholder="Search..."
+  style="border:1px solid var(--border);
+         border-radius:8px;
+         padding:0.35rem 0.75rem;
+         font-size:0.8rem;
+         font-family:'DM Sans',sans-serif;
+         outline:none;
+         color:var(--text-main);"
+/>
+                <select style="border:1px solid var(--border);border-radius:8px;padding:0.35rem 0.6rem;font-size:0.8rem;font-family:'DM Sans',sans-serif;outline:none;color:var(--text-muted);">
+                  <option>All Depts</option><option>Engineering</option><option>HR</option><option>Finance</option>
+                </select>
+              </div>
+            </div>
+            @if (isLoading()) {
+              <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+            } @else if (employees().length > 0) {
+              <table class="data-table">
+                <thead><tr><th>Employee</th><th>ID</th><th>Department</th><th>Manager</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  @for (emp of employees(); track emp.id; let i = $index) {
+                    <tr>
+                      <td>
+                        <div class="d-flex align-items-center gap-2">
+                          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.68rem;font-weight:700;"
+                            [style.background]="getAvatarColor(i)">{{ getInitials(emp.name) }}</div>
+                          <div>
+                            <div style="font-weight:600;">{{ emp.firstName }} {{ emp.lastName }}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">{{ emp.designationName || emp.designation }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{{ emp.employeeCode || emp.employeeId }}</td>
+                      <td>{{ emp.departmentName }}</td>
+                      <td>{{ emp.managerName || '—' }}</td>
+                      <td>
+                        <span class="badge-status" [class.badge-active]="emp.status !== 'INACTIVE'" [class.badge-inactive]="emp.status === 'INACTIVE'">
+                          {{ emp.status === 'INACTIVE' ? 'Inactive' : 'Active' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <button class="btn-sm-action btn-edit"><i class="bi bi-pencil"></i> Edit</button>
+                          @if (emp.status !== 'INACTIVE') {
+                            <button class="btn-sm-action btn-deact" (click)="deactivate(emp.id)"><i class="bi bi-person-x"></i></button>
+                          } @else {
+                            <button class="btn-sm-action btn-react" (click)="reactivate(emp.id)"><i class="bi bi-person-check"></i> Activate</button>
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <div class="text-center p-4 text-muted">No employees found. Add employees to get started.</div>
+            }
+          </div>
+        </div>
+
+        <!-- Dept Leave Report -->
+        <div class="col-lg-4">
+          <div class="section-header">
+            <div class="section-title">Quick Actions</div>
+          </div>
+          <div class="card-panel">
+            <div style="padding:1rem;">
+              <a routerLink="/admin/employees" class="btn-primary-sm" style="width:100%;margin-bottom:0.75rem;display:block;text-align:center;">
+                <i class="bi bi-person-plus"></i> Add Employee
+              </a>
+              <a routerLink="/admin/departments" class="btn-primary-sm" style="width:100%;margin-bottom:0.75rem;display:block;text-align:center;">
+                <i class="bi bi-building"></i> Add Department
+              </a>
+              <a routerLink="/admin/announcements" class="btn-primary-sm" style="width:100%;margin-bottom:0.75rem;display:block;text-align:center;">
+                <i class="bi bi-megaphone"></i> Create Announcement
+              </a>
+              <a routerLink="/admin/holidays" class="btn-primary-sm" style="width:100%;display:block;text-align:center;">
+                <i class="bi bi-calendar-plus"></i> Add Holiday
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Departments + Config + Activity Log -->
+      <div class="row g-3">
+
+        <!-- Departments -->
+        <div class="col-lg-6">
+          <div class="section-header">
+            <div class="section-title">Departments</div>
+            <a routerLink="/admin/departments" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Add</a>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            @for (dept of departments(); track dept.name) {
+              <div class="dept-card">
+                <div class="dept-icon" [style.background]="dept.color" [style.color]="dept.textColor">
+                  <i [class]="'bi ' + dept.icon"></i>
+                </div>
+                <div>
+                  <div class="dept-name">{{ dept.name }}</div>
+                  <div class="dept-count-text">{{ dept.count }} employees</div>
+                </div>
+                <div class="dept-actions">
+                  <a routerLink="/admin/departments" class="btn-sm-action btn-edit"><i class="bi bi-pencil"></i></a>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="text-center p-3 text-muted">No departments found.</div>
+            }
+          </div>
+        </div>
+
+        <!-- System Config -->
+        <div class="col-lg-6">
+          <div class="section-header"><div class="section-title">System Configuration</div></div>
+          <div class="d-flex flex-column gap-2">
+            @for (cfg of configs; track cfg.name) {
+              <div class="config-card">
+                <div class="d-flex align-items-center">
+                  <div class="config-icon" [style.background]="cfg.bg" [style.color]="cfg.color">
+                    <i [class]="'bi ' + cfg.icon"></i>
+                  </div>
+                  <div><div class="config-name">{{ cfg.name }}</div><div class="config-desc">{{ cfg.desc }}</div></div>
+                </div>
+                <a [routerLink]="cfg.route" class="btn-config">{{ cfg.btn }}</a>
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

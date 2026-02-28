@@ -1,0 +1,146 @@
+<div class="d-flex">
+  <app-sidebar role="ADMIN" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Leave Balance Management</div>
+        <div class="page-breadcrumb">Home / Admin / System Configuration / Leave Balance</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-primary-sm" (click)="openAssignModal()">
+          Assign Quota
+        </button>
+        <button class="btn-secondary-sm" (click)="openAdjustModal()">
+          Adjust Balance
+        </button>
+        <div class="topbar-avatar">{{ getInitials('Admin') }}</div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title">All Leave Balances</div>
+        </div>
+        @if (isLoading()) {
+          <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:35%;">Employee</th>
+                  <th style="width:25%;">Leave Type</th>
+                  <th style="width:13%;">Total Days</th>
+                  <th style="width:13%;">Used Days</th>
+                  <th style="width:14%;">Remaining Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (balance of balances(); track balance.id) {
+                  <tr>
+                    <td style="white-space:nowrap;vertical-align:middle;"><strong>{{ balance.userName }}</strong></td>
+                    <td style="white-space:nowrap;vertical-align:middle;">{{ balance.leaveTypeName }}</td>
+                    <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ balance.totalQuota }}</td>
+                    <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ balance.used }}</td>
+                    <td style="white-space:nowrap;text-align:center;vertical-align:middle;">{{ balance.remaining }}</td>
+                  </tr>
+                }
+                @empty {
+                  <tr><td colspan="5" class="text-center p-4 text-muted">No leave balances found</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (showAssignModal()) {
+    <div class="modal-overlay" (click)="showAssignModal.set(false)">
+      <div class="modal-container" (click)="$event.stopPropagation()" style="max-width:500px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Assign Leave Quota</h3>
+          <button type="button" (click)="showAssignModal.set(false)" class="modal-close">&times;</button>
+        </div>
+        <form (ngSubmit)="assignLeaveQuota()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Employee *</label>
+              <select [(ngModel)]="assignForm.employeeId" name="employeeId" required class="form-control">
+                <option value="0">Select Employee</option>
+                @for (emp of employees(); track emp.id) {
+                  <option [value]="emp.id">{{ emp.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Leave Type *</label>
+              <select [(ngModel)]="assignForm.leaveTypeId" name="leaveTypeId" required class="form-control">
+                <option value="0">Select Leave Type</option>
+                @for (type of leaveTypes(); track type.id) {
+                  <option [value]="type.id">{{ type.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Total Quota (Days) *</label>
+              <input type="number" [(ngModel)]="assignForm.totalQuota" name="totalQuota" min="0" required class="form-control" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="showAssignModal.set(false)" class="btn-secondary-sm">Cancel</button>
+            <button type="submit" class="btn-primary-sm">Assign</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  @if (showAdjustModal()) {
+    <div class="modal-overlay" (click)="showAdjustModal.set(false)">
+      <div class="modal-container" (click)="$event.stopPropagation()" style="max-width:500px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Adjust Leave Balance</h3>
+          <button type="button" (click)="showAdjustModal.set(false)" class="modal-close">&times;</button>
+        </div>
+        <form (ngSubmit)="adjustLeaveBalance()">
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Employee *</label>
+              <select [(ngModel)]="adjustForm.employeeId" name="employeeId" required class="form-control">
+                <option value="0">Select Employee</option>
+                @for (emp of employees(); track emp.id) {
+                  <option [value]="emp.id">{{ emp.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Leave Type *</label>
+              <select [(ngModel)]="adjustForm.leaveTypeId" name="leaveTypeId" required class="form-control">
+                <option value="0">Select Leave Type</option>
+                @for (type of leaveTypes(); track type.id) {
+                  <option [value]="type.id">{{ type.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Adjustment (+ to add, - to subtract) *</label>
+              <input type="number" [(ngModel)]="adjustForm.adjustment" name="adjustment" required class="form-control" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reason</label>
+              <textarea [(ngModel)]="adjustForm.reason" name="reason" rows="3" placeholder="Enter reason for adjustment" class="form-control"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" (click)="showAdjustModal.set(false)" class="btn-secondary-sm">Cancel</button>
+            <button type="submit" class="btn-primary-sm">Adjust</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

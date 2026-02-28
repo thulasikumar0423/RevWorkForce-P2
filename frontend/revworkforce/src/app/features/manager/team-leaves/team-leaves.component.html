@@ -1,0 +1,172 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">Team Leave Requests</div>
+        <div class="page-breadcrumb">Home / Manager / Team Leaves</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar">
+          {{ getInitials(auth.currentUser()?.name) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="card-panel">
+        <div class="card-panel-header">
+          <div class="card-panel-title">
+            <i class="bi bi-calendar-check"></i> Leave Requests
+          </div>
+        </div>
+
+        @if (isLoading()) {
+          <div class="loading-spinner">
+            <div class="spinner-border text-primary"></div>
+          </div>
+        } @else {
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (leave of allLeaves(); track leave.id) {
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div style="width:32px;height:32px;border-radius:50%;
+                                  background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+                                  display:flex;align-items:center;justify-content:center;
+                                  color:#fff;font-size:0.7rem;font-weight:700;">
+                        {{ getInitials(leave.employeeName) }}
+                      </div>
+                      <strong>{{ leave.employeeName }}</strong>
+                    </div>
+                  </td>
+
+                  <td>{{ leave.leaveType }}</td>
+                  <td>{{ leave.startDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ leave.endDate | date:'dd MMM yyyy' }}</td>
+                  <td>{{ leave.days }}</td>
+                  <td>{{ leave.reason }}</td>
+
+                  <td>
+                    <span class="badge-status"
+                          [class.badge-pending]="leave.status === 'PENDING'"
+                          [class.badge-approved]="leave.status === 'APPROVED'"
+                          [class.badge-rejected]="leave.status === 'REJECTED'">
+                      {{ leave.status }}
+                    </span>
+                  </td>
+
+                  <td>
+                    @if (leave.status === 'PENDING') {
+                      <div class="d-flex gap-1">
+                        <button class="btn-sm-action btn-approve"
+                                (click)="openFeedbackModal(leave, 'approve')">
+                          <i class="bi bi-check-lg"></i> Approve
+                        </button>
+
+                        <button class="btn-sm-action btn-reject"
+                                (click)="openFeedbackModal(leave, 'reject')">
+                          <i class="bi bi-x-lg"></i> Reject
+                        </button>
+                      </div>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+
+              @empty {
+                <tr>
+                  <td colspan="8"
+                      class="text-center p-4 text-muted">
+                    No leave requests
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  @if (showFeedbackModal()) {
+    <div class="modal-overlay"
+         (click)="showFeedbackModal.set(false)">
+      <div class="modal-container"
+           (click)="$event.stopPropagation()">
+
+        <div class="modal-header">
+          <h3 class="modal-title">
+            {{ feedback.action === 'approve'
+                ? 'Approve'
+                : 'Reject' }} Leave Request
+          </h3>
+
+          <button type="button"
+                  (click)="showFeedbackModal.set(false)"
+                  class="modal-close">
+            &times;
+          </button>
+        </div>
+
+        <form (ngSubmit)="submitFeedback()">
+          <div class="modal-body">
+
+            <div class="form-group">
+              <label class="form-label">
+                Comments
+                {{ feedback.action === 'reject'
+                    ? '(Required)'
+                    : '(Optional)' }}
+              </label>
+
+              <textarea
+                [(ngModel)]="feedback.comments"
+                name="comments"
+                rows="4"
+                class="form-control"
+                [required]="feedback.action === 'reject'">
+              </textarea>
+            </div>
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="button"
+                    (click)="showFeedbackModal.set(false)"
+                    class="btn-secondary-sm">
+              Cancel
+            </button>
+
+            <button type="submit"
+                    class="btn-primary-sm">
+              <i class="bi bi-check-circle"></i> Submit
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  }
+
+</div>

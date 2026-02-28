@@ -1,0 +1,306 @@
+<div class="d-flex">
+  <app-sidebar role="MANAGER" />
+
+  <div class="main-content">
+    <div class="topbar">
+      <div>
+        <div class="page-title">My Team</div>
+        <div class="page-breadcrumb">Manager / My Team</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar"
+             style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);">
+          {{ getInitials(auth.currentUser()?.name || '') }}
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- Stats -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-3">
+          <div class="stat-card">
+            <div class="stat-icon blue">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-value">{{ teamMembers().length }}</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+        </div>
+
+        <div class="col-sm-3">
+          <div class="stat-card">
+            <div class="stat-icon green">
+              <i class="bi bi-person-check"></i>
+            </div>
+            <div class="stat-value">
+              {{ teamMembers().length - 1 }}
+            </div>
+            <div class="stat-label">Present Today</div>
+          </div>
+        </div>
+
+        <div class="col-sm-3">
+          <div class="stat-card">
+            <div class="stat-icon amber">
+              <i class="bi bi-calendar-x"></i>
+            </div>
+            <div class="stat-value">1</div>
+            <div class="stat-label">On Leave</div>
+          </div>
+        </div>
+
+        <div class="col-sm-3">
+          <div class="stat-card">
+            <div class="stat-icon purple">
+              <i class="bi bi-person-workspace"></i>
+            </div>
+            <div class="stat-value">{{ activeMembersCount }}</div>
+            <div class="stat-label">Active Members</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="section-header">
+        <div class="section-title">Team Members</div>
+        <div style="position:relative;">
+          <i class="bi bi-search"
+             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                    color:var(--text-muted);font-size:0.85rem;"></i>
+
+          <input type="text"
+                 placeholder="Search by name or role..."
+                 [value]="searchTerm()"
+                 (input)="searchTerm.set($any($event.target).value)"
+                 style="padding:0.4rem 0.75rem 0.4rem 2.2rem;
+                        border:1.5px solid var(--border);
+                        border-radius:10px;
+                        font-size:0.82rem;
+                        font-family:'DM Sans',sans-serif;
+                        outline:none;
+                        width:220px;" />
+        </div>
+      </div>
+
+      <!-- Members -->
+      @if (isLoading()) {
+
+        <div class="loading-spinner">
+          <div class="spinner-border text-primary"></div>
+        </div>
+
+      } @else {
+
+        <div class="row g-3">
+
+          @for (member of filtered; track member.id) {
+
+            <div class="col-lg-4 col-md-6">
+              <div class="member-card">
+
+                <div class="member-card-top">
+                  <div class="member-avatar-lg"
+                       [style.background]="getAvatarColor(member.firstName + ' ' + member.lastName)">
+                    {{ getInitials(member.firstName + ' ' + member.lastName) }}
+                  </div>
+
+                  <div class="member-status-dot"
+                       [class.online]="member.active"
+                       [class.offline]="!member.active">
+                  </div>
+                </div>
+
+                <div class="member-name">
+                  {{ member.firstName }} {{ member.lastName }}
+                </div>
+
+                <div class="member-role">
+                  {{ member.designationTitle || member.designation || '' }}
+                </div>
+
+                <div class="member-dept">
+                  <i class="bi bi-building"></i>
+                  {{ member.departmentName }}
+                </div>
+
+                <div class="member-meta-row">
+                  <div class="member-meta-item">
+                    <div class="meta-label">Experience</div>
+                    <div class="meta-value">
+                      {{ getExperience(member.joiningDate) }}
+                    </div>
+                  </div>
+
+                  <div class="member-meta-divider"></div>
+
+                  <div class="member-meta-item">
+                    <div class="meta-label">Leave Left</div>
+                    <div class="meta-value">
+                      {{ member.leaveBalance || '—' }} days
+                    </div>
+                  </div>
+                </div>
+
+                <div class="member-status-badge"
+                     [class.active]="member.active"
+                     [class.inactive]="!member.active">
+                  <span class="status-dot-sm"></span>
+                  {{ member.active ? 'Active' : 'Inactive' }}
+                </div>
+
+                <div class="member-actions">
+                  <button class="btn-member-action primary"
+                          (click)="openProfile(member)">
+                    <i class="bi bi-person-circle"></i>
+                    View Profile
+                  </button>
+
+                  <button class="btn-member-action">
+                    <i class="bi bi-envelope"></i>
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          }
+
+          @empty {
+
+            <div class="col-12 text-center p-5"
+                 style="color:var(--text-muted);">
+              <i class="bi bi-people"
+                 style="font-size:2.5rem;
+                        display:block;
+                        margin-bottom:0.75rem;"></i>
+              No team members found.
+            </div>
+
+          }
+
+        </div>
+
+      }
+
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE DRAWER -->
+@if (showProfile() && selectedMember()) {
+
+  <div class="modal-backdrop"
+       (click)="closeProfile()"></div>
+
+  <div class="profile-drawer">
+
+    <div class="drawer-header">
+      <div style="font-family:'Playfair Display',serif;
+                  font-size:1.1rem;
+                  color:var(--text-main);">
+        Member Profile
+      </div>
+
+      <button class="modal-close"
+              (click)="closeProfile()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="drawer-body">
+
+      <div class="text-center mb-3">
+        <div class="drawer-avatar"
+             [style.background]="getAvatarColor(selectedMember().firstName + ' ' + selectedMember().lastName)">
+          {{ getInitials(selectedMember().firstName + ' ' + selectedMember().lastName) }}
+        </div>
+
+        <div style="font-family:'Playfair Display',serif;
+                    font-size:1.2rem;
+                    color:var(--text-main);
+                    margin-top:0.75rem;">
+          {{ selectedMember().firstName }}
+          {{ selectedMember().lastName }}
+        </div>
+
+        <div style="font-size:0.85rem;color:var(--text-muted);">
+          {{ selectedMember().designationTitle }}
+        </div>
+
+        <span class="badge-status mt-2 d-inline-block"
+              [class.badge-active]="selectedMember().active"
+              [class.badge-inactive]="!selectedMember().active">
+          {{ selectedMember().active ? 'Active' : 'Inactive' }}
+        </span>
+      </div>
+
+      <div class="profile-info-list">
+
+        <div class="profile-info-row">
+          <i class="bi bi-building"></i>
+          <div>
+            <div class="pir-label">Department</div>
+            <div class="pir-value">
+              {{ selectedMember().departmentName }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-row">
+          <i class="bi bi-envelope"></i>
+          <div>
+            <div class="pir-label">Email</div>
+            <div class="pir-value">
+              {{ selectedMember().email }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-row">
+          <i class="bi bi-phone"></i>
+          <div>
+            <div class="pir-label">Phone</div>
+            <div class="pir-value">
+              {{ selectedMember().phone }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-row">
+          <i class="bi bi-calendar3"></i>
+          <div>
+            <div class="pir-label">Joining Date</div>
+            <div class="pir-value">
+              {{ selectedMember().joiningDate | date:'dd MMM yyyy' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-row">
+          <i class="bi bi-clock-history"></i>
+          <div>
+            <div class="pir-label">Experience</div>
+            <div class="pir-value">
+              {{ getExperience(selectedMember().joiningDate) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-info-row">
+          <i class="bi bi-calendar-check"></i>
+          <div>
+            <div class="pir-label">Leave Balance</div>
+            <div class="pir-value">
+              {{ selectedMember().leaveBalance || '—' }} days remaining
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+}
